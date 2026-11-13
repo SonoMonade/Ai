@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Corso — Capire e Usare l'Intelligenza Artificiale</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Lato & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <!-- Configurazione Palette Editoriale -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#F7F5F0',
+                        'surface-warm': '#EFECE6',
+                        ink: '#1A1A1A',
+                        petrol: '#1B4D5C',
+                        'petrol-dark': '#123540',
+                        'petrol-light': '#DCE8EC',
+                        terracotta: '#C85A32',
+                        'brown-sub': '#6E473B',
+                        'editorial-green': '#246A4E',
+                        'ochre-index': '#F6E8B1',
+                        'ochre-border': '#D9C27E'
+                    },
+                    fontFamily: {
+                        lato: ['Lato', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F7F5F0;
+            color: rgba(0, 0, 0, 0.9);
+            font-family: 'Lato', sans-serif;
+        }
+        .font-lato-bold {
+            font-weight: 700;
+        }
+        .editorial-card {
+            background-color: #FFFFFF;
+            border: 1px solid rgba(26, 26, 26, 0.18);
+            box-shadow: 3px 3px 0px rgba(26, 26, 26, 0.08);
+        }
+        .editor-only {
+            display: none;
+        }
+        body.mode-editor .editor-only {
+            display: inline-flex;
+        }
+        body.mode-editor .editor-block {
+            display: block;
+        }
+        body.mode-editor .student-only {
+            display: none;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(26, 26, 26, 0.05);
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(27, 77, 92, 0.35);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- SCHERMATA DI ACCESSO / REGISTRAZIONE INIZIALE (Gatekeeper) -->
+    <div id="login-gateway" class="min-h-screen flex items-center justify-center p-4 bg-paper">
+        <div class="max-w-lg w-full editorial-card rounded-sm overflow-hidden">
+            <!-- Intestazione Card Login -->
+            <div class="bg-petrol text-white p-6 border-b border-ink/20">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white text-petrol flex items-center justify-center rounded-sm font-serif font-bold text-lg">
+                            AI
+                        </div>
+                        <span class="text-[10px] font-lato-bold uppercase tracking-widest text-ochre-index">Corso Base • LSA Centocelle</span>
+                    </div>
+                    <div class="inline-flex items-center gap-1.5 text-[10px] bg-petrol-dark/70 px-2.5 py-1 rounded-sm">
+                        <span id="login-sync-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <span id="login-sync-status">Connessione...</span>
+                    </div>
+                </div>
+                <h1 class="font-serif text-2xl font-bold leading-tight">
+                    Capire e Usare l'Intelligenza Artificiale
+                </h1>
+                <p class="text-xs text-white/85 mt-1">
+                    Accedi o registrati con la tua email per entrare nell'aula digitale
+                </p>
+            </div>
+
+            <!-- Selettore Ruolo (Studente vs Docente/Admin) -->
+            <div class="grid grid-cols-2 border-b border-ink/20 text-xs font-lato-bold uppercase tracking-wider">
+                <button type="button" id="tab-student-login" onclick="switchLoginTab('student')" class="py-3.5 bg-white text-petrol border-b-2 border-terracotta transition-colors flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-graduate"></i> Studente
+                </button>
+                <button type="button" id="tab-admin-login" onclick="switchLoginTab('admin')" class="py-3.5 bg-surface-warm text-brown-sub hover:text-ink border-l border-ink/15 transition-colors flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-shield"></i> Docente / Admin
+                </button>
+            </div>
+
+            <!-- Form 1: Accesso / Registrazione Studente -->
+            <form id="form-student-gateway" onsubmit="handleStudentGatewaySubmit(event)" class="p-6 space-y-4 text-sm bg-white">
+                <div class="bg-paper border-l-2 border-petrol p-3 text-xs text-black/85 leading-relaxed">
+                    <strong>Prima volta o nuovo accesso?</strong> Inserisci Nome, Cognome ed Email: se sei già iscritto recuperiamo automaticamente le tue lezioni fatte, altrimenti ricevi subito la conferma.
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label for="gw-first-name" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Nome</label>
+                        <input id="gw-first-name" type="text" required placeholder="Es. Giulia" class="w-full border border-ink/30 bg-paper px-3 py-2.5 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                    </div>
+                    <div>
+                        <label for="gw-last-name" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Cognome</label>
+                        <input id="gw-last-name" type="text" required placeholder="Es. Bianchi" class="w-full border border-ink/30 bg-paper px-3 py-2.5 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="gw-email" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Indirizzo Email</label>
+                    <input id="gw-email" type="email" required placeholder="nome@esempio.it" class="w-full border border-ink/30 bg-paper px-3 py-2.5 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                </div>
+
+                <p id="gw-student-error" class="hidden text-xs text-terracotta font-lato-bold"></p>
+
+                <button type="submit" id="gw-student-btn" class="w-full py-3 bg-terracotta hover:bg-terracotta/90 text-white border border-ink text-xs font-lato-bold uppercase tracking-widest rounded-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entra nel Corso e Conferma Email
+                </button>
+            </form>
+
+            <!-- Form 2: Accesso Admin / Docente -->
+            <form id="form-admin-gateway" onsubmit="handleAdminGatewaySubmit(event)" class="hidden p-6 space-y-4 text-sm bg-white">
+                <div class="bg-paper border-l-2 border-terracotta p-3 text-xs text-black/85 leading-relaxed">
+                    <strong>Area Riservata Docente:</strong> accedi con le credenziali amministratore per modificare i contenuti, gestire le cartelle e consultare l'elenco studenti.
+                </div>
+
+                <div>
+                    <label for="gw-admin-user" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Utente Admin</label>
+                    <input id="gw-admin-user" type="text" required autocomplete="username" placeholder="Inserisci username" class="w-full border border-ink/30 bg-paper px-3 py-2.5 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                </div>
+
+                <div>
+                    <label for="gw-admin-pass" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Password</label>
+                    <input id="gw-admin-pass" type="password" required autocomplete="current-password" placeholder="••••••••" class="w-full border border-ink/30 bg-paper px-3 py-2.5 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                </div>
+
+                <p id="gw-admin-error" class="hidden text-xs text-terracotta font-lato-bold"></p>
+
+                <button type="submit" class="w-full py-3 bg-petrol hover:bg-petrol-dark text-white border border-ink text-xs font-lato-bold uppercase tracking-widest rounded-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-lock-open"></i> Accedi come Docente / Admin
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTENITORE PRINCIPALE DASHBOARD (Nascosto fino all'autenticazione) -->
+    <div id="app-shell" class="hidden min-h-screen flex-col">
+
+        <!-- 1. HEADER SUPERIORE STICKY -->
+        <header class="bg-white border-b-2 border-ink/20 sticky top-0 z-30">
+            <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                
+                <!-- Blocco Sinistro: Badge AI, Occhiello, Titolo e Sottotitolo -->
+                <div class="flex items-start gap-3.5">
+                    <div class="w-11 h-11 bg-petrol text-white flex items-center justify-center rounded-sm shrink-0 font-serif font-bold text-xl mt-0.5 shadow-sm">
+                        AI
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-0.5">
+                            <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Corso Base • Passo dopo Passo</span>
+                            <span class="text-ink/30">•</span>
+                            <div class="inline-flex items-center gap-1.5 text-[10px]">
+                                <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                <span id="sync-status" class="font-lato-bold text-black/80">Connessione...</span>
+                            </div>
+                        </div>
+                        <h1 class="font-serif text-xl sm:text-2xl font-bold text-terracotta leading-tight">
+                            Capire e Usare l'Intelligenza Artificiale
+                        </h1>
+                        <p class="text-xs sm:text-sm font-lato-bold text-brown-sub mt-0.5">
+                            Guida semplice e pratica per imparare da zero, senza parole difficili
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Blocco Centrale-Destro: Area Studente / Controlli Docente & Esci -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                    
+                    <!-- Box Studente con Progresso Lezioni (Visibile solo quando loggato come Studente) -->
+                    <div class="student-only bg-paper border border-ink/25 rounded-sm px-3.5 py-2 flex flex-wrap items-center gap-3">
+                        <span class="px-2 py-0.5 bg-petrol text-white text-[10px] font-lato-bold uppercase tracking-widest rounded-sm">
+                            Studente
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <span id="student-display-name" class="text-xs font-lato-bold text-black/90"></span>
+                            <span id="student-display-email" class="text-[11px] text-brown-sub bg-white px-2 py-0.5 border border-ink/15 rounded-sm"></span>
+                        </div>
+                        <div class="flex items-center gap-2 pl-2 border-l border-ink/15">
+                            <span class="text-[10px] font-lato-bold uppercase tracking-wider text-brown-sub">Lezioni fatte:</span>
+                            <span id="completed-lessons-count" class="text-sm font-lato-bold text-terracotta">0</span>
+                            <span class="text-[11px] text-black/70">/ 5</span>
+                            <div class="inline-flex items-center gap-1 ml-1">
+                                <button onclick="updateCompletedLessons(-1)" title="Togli una lezione" class="w-6 h-6 bg-white hover:bg-ink hover:text-white border border-ink/25 rounded-sm text-xs font-lato-bold transition-colors">-</button>
+                                <button onclick="updateCompletedLessons(1)" title="Segna lezione fatta" class="w-6 h-6 bg-petrol hover:bg-petrol-dark text-white rounded-sm text-xs font-lato-bold transition-colors">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controlli Admin / Docente (Visibili solo se loggato come Admin) -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="editor-only inline-flex border border-ink/30 rounded-sm overflow-hidden text-xs">
+                            <button id="btn-student" onclick="setMode('student')" class="px-3 py-2 bg-surface-warm text-black/90 hover:bg-ink/5 font-lato-bold uppercase tracking-wider transition-colors">Anteprima Studente</button>
+                            <button id="btn-editor" onclick="setMode('editor')" class="px-3 py-2 bg-petrol text-white font-lato-bold uppercase tracking-wider border-l border-ink/30 transition-colors">Editor Docente</button>
+                        </div>
+                        <button onclick="openRosterModal()" class="editor-only px-3.5 py-2 bg-white hover:bg-surface-warm text-petrol border border-ink text-xs font-lato-bold uppercase tracking-wider rounded-sm transition-colors items-center gap-1.5">
+                            <i class="fa-solid fa-users"></i> Studenti (<span id="roster-count-badge">0</span>)
+                        </button>
+                        <button onclick="openEmailConfigModal()" class="editor-only px-3 py-2 bg-white hover:bg-surface-warm text-brown-sub border border-ink text-xs font-lato-bold uppercase tracking-wider rounded-sm transition-colors items-center gap-1.5" title="Configura invio automatico email">
+                            <i class="fa-solid fa-envelope-circle-check"></i> Email Auto
+                        </button>
+                        <button onclick="exportCourseData()" title="Scarica programma in JSON" class="px-3 py-2 bg-surface-warm hover:bg-ink hover:text-white text-black/90 border border-ink text-xs font-lato-bold uppercase tracking-wider rounded-sm transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i><span>JSON</span>
+                        </button>
+                        <button onclick="toggleModal()" class="editor-only px-3.5 py-2 bg-terracotta hover:bg-terracotta/90 text-white border border-ink text-xs font-lato-bold uppercase tracking-wider rounded-sm transition-colors items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Scheda
+                        </button>
+                        <button onclick="logoutSession()" title="Torna alla schermata di login" class="px-3 py-2 bg-white hover:bg-terracotta hover:text-white text-terracotta border border-terracotta text-xs font-lato-bold uppercase tracking-wider rounded-sm transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-right-from-bracket"></i><span>Esci</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Banner Conferma Invio Email (appare dopo registrazione studente) -->
+        <div id="email-confirmation-banner" class="hidden bg-editorial-green text-white border-b border-ink/20 px-4 py-2.5 text-xs">
+            <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-circle-check text-sm"></i>
+                    <span id="email-confirmation-text">Conferma inviata!</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a id="mailto-fallback-link" href="#" class="underline font-lato-bold hover:text-ochre-index">
+                        <i class="fa-regular fa-paper-plane mr-1"></i>Apri copia nella tua app Email
+                    </a>
+                    <button onclick="dismissEmailBanner()" aria-label="Chiudi avviso" class="text-white/80 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LAYOUT PRINCIPALE A DUE COLONNE -->
+        <div class="flex-1 max-w-[1440px] w-full mx-auto flex flex-col lg:flex-row">
+
+            <!-- Colonna Laterale Sinistra: INDICE COMPRIMIBILE (5 Lezioni) + CALENDARIO LEZIONI -->
+            <aside class="w-full lg:w-64 shrink-0 bg-ochre-index border-b lg:border-b-0 lg:border-r border-ochre-border p-4">
+                <div class="lg:sticky lg:top-24 space-y-4">
+                    
+                    <!-- Sezione 1: Indice Programma (Comprimibile / Espandibile al clic) -->
+                    <div class="bg-white/65 border border-ochre-border rounded-sm p-3">
+                        <button onclick="toggleSidebarSection('index-tree-content', 'index-chevron')" aria-expanded="false" class="w-full flex items-center justify-between text-left group">
+                            <span class="font-lato-bold text-xs uppercase tracking-widest text-ink group-hover:text-terracotta transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-list-ol text-brown-sub"></i> INDICE CORSO
+                            </span>
+                            <i id="index-chevron" class="fa-solid fa-chevron-down text-brown-sub text-xs transition-transform duration-200"></i>
+                        </button>
+
+                        <!-- Contenuto dell'indice su tutte e 5 le lezioni (chiuso di default) -->
+                        <div id="index-tree-content" class="hidden pt-3 mt-2.5 border-t border-ochre-border space-y-3.5 max-h-[55vh] overflow-y-auto pr-1 custom-scroll">
+                            
+                            <!-- Lezione 1 -->
+                            <div class="space-y-1">
+                                <button onclick="scrollToSection('unit-1')" class="w-full text-left flex items-baseline gap-2 group">
+                                    <span class="font-serif text-lg font-bold text-terracotta leading-none">1</span>
+                                    <span class="text-xs font-lato-bold uppercase tracking-wider text-ink group-hover:text-terracotta transition-colors">Le Basi dell'AI</span>
+                                </button>
+                                <ul class="pl-4 space-y-1 text-[11px] font-lato-bold text-brown-sub border-l-2 border-ochre-border ml-1.5">
+                                    <li><button onclick="scrollToSection('sec-1-1')" class="hover:text-terracotta text-left py-0.5 leading-snug">1.1 Cos'è e a cosa serve</button></li>
+                                    <li><button onclick="scrollToSection('sec-1-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">1.2 Come ragiona e sceglie</button></li>
+                                    <li><button onclick="scrollToSection('sec-1-3')" class="hover:text-terracotta text-left py-0.5 leading-snug">1.3 Quali strumenti usare</button></li>
+                                </ul>
+                            </div>
+
+                            <hr class="border-ochre-border">
+
+                            <!-- Lezione 2 -->
+                            <div class="space-y-1">
+                                <button onclick="scrollToSection('unit-2')" class="w-full text-left flex items-baseline gap-2 group">
+                                    <span class="font-serif text-lg font-bold text-terracotta leading-none">2</span>
+                                    <span class="text-xs font-lato-bold uppercase tracking-wider text-ink group-hover:text-terracotta transition-colors">Chiedere e Controllare</span>
+                                </button>
+                                <ul class="pl-4 space-y-1 text-[11px] font-lato-bold text-brown-sub border-l-2 border-ochre-border ml-1.5">
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">2.1 Scrivere domande chiare</button></li>
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">2.2 Errori dell'AI e controllo umano</button></li>
+                                </ul>
+                            </div>
+
+                            <hr class="border-ochre-border">
+
+                            <!-- Lezione 3 -->
+                            <div class="space-y-1">
+                                <button onclick="scrollToSection('unit-2')" class="w-full text-left flex items-baseline gap-2 group">
+                                    <span class="font-serif text-lg font-bold text-terracotta leading-none">3</span>
+                                    <span class="text-xs font-lato-bold uppercase tracking-wider text-ink group-hover:text-terracotta transition-colors">Privacy e Sicurezza</span>
+                                </button>
+                                <ul class="pl-4 space-y-1 text-[11px] font-lato-bold text-brown-sub border-l-2 border-ochre-border ml-1.5">
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">3.1 Proteggere i propri dati</button></li>
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">3.2 Usare bene le chat</button></li>
+                                </ul>
+                            </div>
+
+                            <hr class="border-ochre-border">
+
+                            <!-- Lezione 4 -->
+                            <div class="space-y-1">
+                                <button onclick="scrollToSection('unit-2')" class="w-full text-left flex items-baseline gap-2 group">
+                                    <span class="font-serif text-lg font-bold text-terracotta leading-none">4</span>
+                                    <span class="text-xs font-lato-bold uppercase tracking-wider text-ink group-hover:text-terracotta transition-colors">Immagini, Voce e Video</span>
+                                </button>
+                                <ul class="pl-4 space-y-1 text-[11px] font-lato-bold text-brown-sub border-l-2 border-ochre-border ml-1.5">
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">4.1 Leggere e creare foto</button></li>
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">4.2 Usare foto, audio e testi insieme</button></li>
+                                </ul>
+                            </div>
+
+                            <hr class="border-ochre-border">
+
+                            <!-- Lezione 5 -->
+                            <div class="space-y-1">
+                                <button onclick="scrollToSection('unit-2')" class="w-full text-left flex items-baseline gap-2 group">
+                                    <span class="font-serif text-lg font-bold text-terracotta leading-none">5</span>
+                                    <span class="text-xs font-lato-bold uppercase tracking-wider text-ink group-hover:text-terracotta transition-colors">Regole e Limiti dell'AI</span>
+                                </button>
+                                <ul class="pl-4 space-y-1 text-[11px] font-lato-bold text-brown-sub border-l-2 border-ochre-border ml-1.5">
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">5.1 Cosa l'AI non sa fare</button></li>
+                                    <li><button onclick="scrollToSection('unit-2')" class="hover:text-terracotta text-left py-0.5 leading-snug">5.2 Pregiudizi e prova finale</button></li>
+                                </ul>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Sezione 2: Piccola sezione Calendario Lezioni subito sotto -->
+                    <div class="bg-white/80 border border-ochre-border rounded-sm p-3">
+                        <div class="flex items-center justify-between border-b border-ochre-border pb-1.5 mb-2.5">
+                            <span class="font-lato-bold text-[11px] uppercase tracking-widest text-ink flex items-center gap-1.5">
+                                <i class="fa-regular fa-calendar text-terracotta"></i> Calendario Lezioni
+                            </span>
+                            <span class="text-[10px] font-lato-bold text-brown-sub">2026</span>
+                        </div>
+                        <ul class="space-y-1.5 text-[11px]">
+                            <li class="flex items-center justify-between bg-white px-2 py-1.5 rounded-sm border border-petrol/35">
+                                <span class="font-lato-bold text-petrol">16/11</span>
+                                <span class="text-black/90 font-lato-bold truncate ml-2">1. Le Basi dell'AI</span>
+                            </li>
+                            <li class="flex items-center justify-between px-2 py-1 text-black/80">
+                                <span class="font-lato-bold text-brown-sub">23/11</span>
+                                <span class="truncate ml-2">2. Chiedere e Controllare</span>
+                            </li>
+                            <li class="flex items-center justify-between px-2 py-1 text-black/80">
+                                <span class="font-lato-bold text-brown-sub">30/11</span>
+                                <span class="truncate ml-2">3. Privacy e Sicurezza</span>
+                            </li>
+                            <li class="flex items-center justify-between px-2 py-1 text-black/80">
+                                <span class="font-lato-bold text-brown-sub">07/12</span>
+                                <span class="truncate ml-2">4. Immagini, Voce e Video</span>
+                            </li>
+                            <li class="flex items-center justify-between px-2 py-1 text-black/80">
+                                <span class="font-lato-bold text-brown-sub">14/12</span>
+                                <span class="truncate ml-2">5. Regole e Limiti dell'AI</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </aside>
+
+            <!-- Area Principale Destra -->
+            <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+                <!-- Banner Modalità Editor Docente -->
+                <div id="editor-banner" class="hidden bg-terracotta/10 border border-terracotta/30 px-4 py-3 rounded-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2.5 text-black/90">
+                        <i class="fa-solid fa-pen-to-square text-terracotta"></i>
+                        <span><strong>Modalità Admin / Docente attiva:</strong> aggiungi schede nelle lezioni o carica file nelle cartelle dei moduli.</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleMaterialModal()" class="font-lato-bold underline text-petrol hover:text-ink">+ File in cartella</button>
+                        <button onclick="toggleModal()" class="font-lato-bold underline text-terracotta hover:text-ink">+ Scheda lezione</button>
+                    </div>
+                </div>
+
+                <!-- Intestazione Lezione 1: Introduzione 1 — 16/11/26 -->
+                <section id="unit-1" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b-2 border-ink/20 pb-2.5 gap-2">
+                        <h2 class="font-serif text-2xl sm:text-3xl font-bold text-terracotta">
+                            Introduzione 1 — 16/11/26
+                        </h2>
+                        <span class="text-xs font-lato-bold uppercase tracking-wider text-brown-sub">
+                            Lezione 1 • Le Basi dell'AI
+                        </span>
+                    </div>
+
+                    <!-- Griglia 3 Colonne con intestazioni SOPRA i riquadri -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                        <!-- Blocco 1.1 -->
+                        <div id="sec-1-1" class="flex flex-col">
+                            <div class="mb-2 px-0.5">
+                                <span class="font-serif text-lg font-bold text-brown-sub mr-1.5">1.1</span>
+                                <span class="font-serif text-lg font-bold text-editorial-green">Cos'è e a cosa serve</span>
+                            </div>
+                            <div class="editorial-card p-5 rounded-sm flex-1 flex flex-col justify-between">
+                                <div>
+                                    <p class="text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-2.5">4 livelli dal più grande al più piccolo:</p>
+                                    <ul class="space-y-2.5 text-sm text-black/90 mb-5">
+                                        <li class="flex items-start gap-2.5">
+                                            <i class="fa-solid fa-check text-editorial-green text-xs mt-1"></i>
+                                            <span><strong>Intelligenza Artificiale:</strong> computer che imitano azioni umane</span>
+                                        </li>
+                                        <li class="flex items-start gap-2.5">
+                                            <i class="fa-solid fa-check text-editorial-green text-xs mt-1"></i>
+                                            <span><strong>Machine Learning:</strong> macchine che imparano dagli esempi</span>
+                                        </li>
+                                        <li class="flex items-start gap-2.5">
+                                            <i class="fa-solid fa-check text-editorial-green text-xs mt-1"></i>
+                                            <span><strong>Deep Learning:</strong> reti ispirate al cervello per voci e volti</span>
+                                        </li>
+                                        <li class="flex items-start gap-2.5">
+                                            <i class="fa-solid fa-check text-editorial-green text-xs mt-1"></i>
+                                            <span><strong>AI Generativa:</strong> crea testi, immagini e audio nuovi (ChatGPT, Gemini)</span>
+                                        </li>
+                                    </ul>
+                                    <div id="col-1-dynamic" class="space-y-3 mb-4"></div>
+                                </div>
+
+                                <div class="pt-4 border-t border-ink/10 flex items-center justify-between">
+                                    <span class="text-[11px] font-lato-bold uppercase tracking-wider text-brown-sub">Scheda Visiva & Notebook LLM</span>
+                                    <button onclick="openModuleDetail()" class="px-5 py-1.5 bg-petrol hover:bg-petrol-dark text-white border border-ink text-xs font-lato-bold uppercase tracking-widest rounded-sm transition-colors shadow-sm">
+                                        OPEN
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Blocco 1.2 -->
+                        <div id="sec-1-2" class="flex flex-col">
+                            <div class="mb-2 px-0.5">
+                                <span class="font-serif text-lg font-bold text-brown-sub mr-1.5">1.2</span>
+                                <span class="font-serif text-lg font-bold text-terracotta">Come ragiona e sceglie</span>
+                            </div>
+                            <div class="editorial-card p-5 rounded-sm flex-1 flex flex-col justify-between">
+                                <div>
+                                    <p class="text-sm text-black/90 leading-relaxed mb-4">
+                                        <strong>Ricetta fissa vs Imparare dagli esempi:</strong> l'AI non capisce il senso delle parole come una persona, ma indovina a ogni passo la parola più probabile.
+                                    </p>
+                                    <div class="bg-paper border-l-2 border-petrol p-3.5 text-xs text-black/90 space-y-1.5 mb-5">
+                                        <p class="font-lato-bold text-brown-sub uppercase tracking-wider">Esempio pratico:</p>
+                                        <p><em>"Il gatto è seduto sul..."</em> → sceglie <strong>tappeto (85%)</strong>, tavolo (10%) o tetto (5%). Scrive molto bene, ma può anche inventare fatti falsi.</p>
+                                    </div>
+                                    <div id="col-2-dynamic" class="space-y-3 mb-4"></div>
+                                </div>
+                                <div class="pt-4 border-t border-ink/10 flex items-center justify-between text-xs">
+                                    <span class="uppercase tracking-wider text-brown-sub font-lato-bold">Metodo:</span>
+                                    <span class="font-lato-bold text-black/90">Calcolo delle probabilità</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Blocco 1.3 -->
+                        <div id="sec-1-3" class="flex flex-col">
+                            <div class="mb-2 px-0.5">
+                                <span class="font-serif text-lg font-bold text-brown-sub mr-1.5">1.3</span>
+                                <span class="font-serif text-lg font-bold text-terracotta">Quali strumenti usare</span>
+                            </div>
+                            <div class="editorial-card p-5 rounded-sm flex-1 flex flex-col justify-between">
+                                <div>
+                                    <p class="text-sm text-black/90 leading-relaxed mb-4">
+                                        I 3 assistenti principali: <strong>ChatGPT</strong> (ottimo per scrivere e riassumere), <strong>Gemini</strong> (collegato a Google e Internet) e <strong>Copilot</strong> (integrato in Windows e Office).
+                                    </p>
+                                    <div class="bg-paper border-l-2 border-terracotta p-3.5 text-xs text-black/90 space-y-1.5 mb-5">
+                                        <p class="font-lato-bold text-brown-sub uppercase tracking-wider">Buone abitudini:</p>
+                                        <p>Apri sempre una <strong>Nuova Chat</strong> quando cambi argomento e non scrivere mai dati personali, nomi reali o password.</p>
+                                    </div>
+                                    <div id="col-3-dynamic" class="space-y-3 mb-4"></div>
+                                </div>
+                                <div class="pt-4 border-t border-ink/10 flex items-center justify-between text-xs">
+                                    <span class="uppercase tracking-wider text-brown-sub font-lato-bold">Risultato:</span>
+                                    <span class="font-lato-bold text-black/90">Primi passi in sicurezza</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- Barra Riepilogo Prossime Lezioni (2 - 5) -->
+                <section id="unit-2" class="bg-white/80 border border-ink/20 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Prossime Lezioni (2 – 5)</span>
+                        <h3 class="font-serif text-lg font-bold text-terracotta">
+                            2. Chiedere e Controllare • 3. Privacy e Sicurezza • 4. Immagini, Voce e Video • 5. Regole e Limiti dell'AI
+                        </h3>
+                    </div>
+                    <span class="text-xs font-lato-bold text-brown-sub bg-surface-warm px-3 py-1.5 border border-ink/15 rounded-sm shrink-0">
+                        In arrivo
+                    </span>
+                </section>
+
+                <!-- Fascia Inferiore a 4 Riquadri su fondo warm (#EFECE6) -->
+                <section class="bg-surface-warm border border-ink/20 rounded-sm overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-ink/20">
+
+                        <!-- Riquadro 1: Glossario (113 voci) + Cerca -->
+                        <div class="p-5 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Parole Chiave</span>
+                                    <span id="glossary-count-badge" class="text-[10px] font-lato-bold text-petrol bg-white px-2 py-0.5 border border-ink/15 rounded-sm">113 voci</span>
+                                </div>
+                                <h3 class="font-serif text-xl font-bold text-terracotta mb-3">Glossario</h3>
+
+                                <div class="relative mb-3">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-brown-sub text-xs"></i>
+                                    <input
+                                        id="glossary-search"
+                                        type="text"
+                                        oninput="filterGlossary()"
+                                        placeholder="Cerca una parola..."
+                                        aria-label="Cerca nel glossario"
+                                        class="w-full pl-8 pr-3 py-1.5 bg-white border border-ink/25 rounded-sm text-xs text-black/90 placeholder:text-brown-sub/60 focus:outline-none focus:border-petrol"
+                                    >
+                                </div>
+
+                                <div id="glossary-grid" class="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scroll"></div>
+                                <p id="glossary-empty" class="hidden text-xs text-brown-sub italic py-2">Nessuna parola trovata.</p>
+                            </div>
+                        </div>
+
+                        <!-- Riquadro 2: Libri e Blog -->
+                        <div class="p-5 flex flex-col justify-between">
+                            <div>
+                                <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub block mb-1">Letture Consigliate</span>
+                                <h3 class="font-serif text-xl font-bold text-terracotta mb-3">Libri e Blog</h3>
+                                <ul class="space-y-2.5 text-xs text-black/90">
+                                    <li class="bg-white p-2.5 border border-ink/15 rounded-sm">
+                                        <span class="font-lato-bold text-brown-sub block uppercase text-[10px]">Libro</span>
+                                        <span class="font-lato-bold">L'intelligenza artificiale</span> — Jerry Kaplan
+                                    </li>
+                                    <li class="bg-white p-2.5 border border-ink/15 rounded-sm">
+                                        <span class="font-lato-bold text-brown-sub block uppercase text-[10px]">Libro</span>
+                                        <span class="font-lato-bold">Co-Intelligence</span> — Ethan Mollick
+                                    </li>
+                                    <li class="bg-white p-2.5 border border-ink/15 rounded-sm">
+                                        <span class="font-lato-bold text-brown-sub block uppercase text-[10px]">Blog</span>
+                                        <span class="font-lato-bold">One Useful Thing</span> / <span class="font-lato-bold">The Batch</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Riquadro 3: Materiale di studio (Diviso in cartelle per modulo) -->
+                        <div class="p-5 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Cartelle Lezioni</span>
+                                    <button onclick="toggleMaterialModal()" class="editor-only text-[10px] font-lato-bold uppercase tracking-wider text-petrol hover:underline">
+                                        + Aggiungi
+                                    </button>
+                                </div>
+                                <h3 class="font-serif text-xl font-bold text-terracotta mb-3">Materiale di studio</h3>
+                                <div id="study-folders-container" class="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scroll"></div>
+                            </div>
+                        </div>
+
+                        <!-- Riquadro 4: Spazio Riservato con bordo tratteggiato -->
+                        <div class="p-5 flex flex-col justify-between min-h-[220px]">
+                            <div class="h-full border border-dashed border-ink/25 rounded-sm p-4 flex flex-col items-center justify-center text-center text-brown-sub/45">
+                                <span class="text-[10px] uppercase tracking-widest font-lato-bold">Spazio Riservato</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODALE 1: Approfondimento OPEN (Sezione 1.1 — Spiegazione Semplice) -->
+    <div id="open-detail-modal" class="fixed inset-0 bg-ink/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border border-ink max-w-2xl w-full p-6 rounded-sm shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-ink/15 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Scheda 1.1 — Guida Semplice</span>
+                    <h3 class="font-serif text-xl font-bold text-editorial-green">La Ricetta vs Imparare dagli Esempi</h3>
+                </div>
+                <button onclick="closeModuleDetail()" aria-label="Chiudi finestra" class="text-black/60 hover:text-black">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-4 text-sm text-black/90 leading-relaxed">
+                <p><strong>Come funziona un programma classico:</strong> segue una ricetta precisa scritta dall'uomo (<em>"SE l'acqua bolle, ALLORA butta la pasta"</em>). Se manca un ingrediente, si blocca.<br>
+                <strong>Come funziona l'AI:</strong> guarda migliaia di esempi già risolti, trova da sola gli schemi e si adatta anche alle novità.</p>
+                
+                <div class="overflow-x-auto border border-ink/20 rounded-sm">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-petrol text-white uppercase tracking-wider">
+                            <tr>
+                                <th class="p-2.5">Caratteristica</th>
+                                <th class="p-2.5">Programma Classico</th>
+                                <th class="p-2.5">Intelligenza Artificiale</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-ink/15 bg-paper">
+                            <tr>
+                                <td class="p-2.5 font-lato-bold text-brown-sub">Come funziona</td>
+                                <td class="p-2.5">Regole fisse scritte dall'uomo</td>
+                                <td class="p-2.5">Impara da tanti esempi e dati</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 font-lato-bold text-brown-sub">Risposte</td>
+                                <td class="p-2.5">Sempre uguali alla stessa domanda</td>
+                                <td class="p-2.5">Sempre diverse, scritte sul momento</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 font-lato-bold text-brown-sub">Imprevisti</td>
+                                <td class="p-2.5">Si blocca se c'è un errore</td>
+                                <td class="p-2.5">Capisce il senso anche con errori</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="bg-paper border-l-2 border-editorial-green p-3.5 text-xs space-y-1.5">
+                    <p class="font-lato-bold text-brown-sub uppercase">La Regola del Pilota Umano (3 passaggi):</p>
+                    <p>1. <strong>Prima:</strong> tu dai istruzioni chiare e togli i dati privati.<br>
+                       2. <strong>Durante:</strong> l'AI prepara una prima bozza veloce.<br>
+                       3. <strong>Dopo:</strong> tu rileggi, controlli che sia tutto vero e firmi il lavoro.</p>
+                </div>
+            </div>
+            <div class="flex justify-end mt-5">
+                <button onclick="closeModuleDetail()" class="px-4 py-2 bg-petrol text-white text-xs font-lato-bold uppercase tracking-wider rounded-sm hover:bg-petrol-dark">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE 2: Aggiungi Scheda Didattica (Modalità Editor Docente) -->
+    <div id="module-modal" class="fixed inset-0 bg-ink/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border border-ink max-w-md w-full p-6 rounded-sm shadow-xl">
+            <div class="flex items-center justify-between border-b border-ink/15 pb-3 mb-4">
+                <h3 class="font-serif text-lg font-bold text-terracotta">Aggiungi Scheda nella Lezione</h3>
+                <button onclick="toggleModal()" aria-label="Chiudi finestra" class="text-black/60 hover:text-black">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="new-module-form" onsubmit="addNewModule(event)" class="space-y-4 text-sm">
+                <div>
+                    <label for="mod-column" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Dove vuoi inserirla?</label>
+                    <select id="mod-column" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                        <option value="1">1.1 - Cos'è e a cosa serve</option>
+                        <option value="2">1.2 - Come ragiona e sceglie</option>
+                        <option value="3">1.3 - Quali strumenti usare</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="mod-title" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Titolo della scheda</label>
+                    <input id="mod-title" type="text" required placeholder="Es. Esercizio pratico in classe" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                </div>
+                <div>
+                    <label for="mod-desc" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Testo semplice</label>
+                    <textarea id="mod-desc" rows="3" required placeholder="Scrivi qui il contenuto della scheda..." class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol text-black/90"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="toggleModal()" class="px-4 py-2 border border-ink/30 text-xs font-lato-bold uppercase tracking-wider rounded-sm hover:bg-surface-warm text-black/90">Annulla</button>
+                    <button type="submit" class="px-4 py-2 bg-petrol text-white text-xs font-lato-bold uppercase tracking-wider rounded-sm hover:bg-petrol-dark">Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALE 3: Aggiungi Materiale di Studio nella cartella di un Modulo -->
+    <div id="material-modal" class="fixed inset-0 bg-ink/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border border-ink max-w-md w-full p-6 rounded-sm shadow-xl">
+            <div class="flex items-center justify-between border-b border-ink/15 pb-3 mb-4">
+                <h3 class="font-serif text-lg font-bold text-terracotta">Aggiungi File in Cartella</h3>
+                <button onclick="toggleMaterialModal()" aria-label="Chiudi finestra" class="text-black/60 hover:text-black">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="new-material-form" onsubmit="addStudyMaterial(event)" class="space-y-4 text-sm">
+                <div>
+                    <label for="mat-folder" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Scegli Cartella</label>
+                    <select id="mat-folder" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                        <option value="1.1">Cartella 1.1 — Cos'è e a cosa serve</option>
+                        <option value="1.2">Cartella 1.2 — Come ragiona e sceglie</option>
+                        <option value="1.3">Cartella 1.3 — Quali strumenti usare</option>
+                        <option value="2">Cartella 2–5 — Lezioni successive</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="mat-type" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Tipo di materiale</label>
+                    <input id="mat-type" type="text" required placeholder="Es. Slide PDF, Scheda Esercizi, Guida" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                </div>
+                <div>
+                    <label for="mat-title" class="block text-xs font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Titolo del file</label>
+                    <input id="mat-title" type="text" required placeholder="Es. Riassunto Lezione 1 (16/11/26)" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol text-black/90">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="toggleMaterialModal()" class="px-4 py-2 border border-ink/30 text-xs font-lato-bold uppercase tracking-wider rounded-sm hover:bg-surface-warm text-black/90">Annulla</button>
+                    <button type="submit" class="px-4 py-2 bg-petrol text-white text-xs font-lato-bold uppercase tracking-wider rounded-sm hover:bg-petrol-dark">Salva nella Cartella</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALE 4: Registro Studenti & Stato Email (Vista Docente) -->
+    <div id="roster-modal" class="fixed inset-0 bg-ink/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border border-ink max-w-2xl w-full p-6 rounded-sm shadow-xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-ink/15 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Monitoraggio Classe</span>
+                    <h3 class="font-serif text-lg font-bold text-terracotta">Studenti Registrati & Conferme Email</h3>
+                </div>
+                <button onclick="closeRosterModal()" aria-label="Chiudi finestra" class="text-black/60 hover:text-black">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto flex-1 border border-ink/15 rounded-sm">
+                <table class="w-full text-xs text-left">
+                    <thead class="bg-surface-warm text-brown-sub uppercase tracking-wider border-b border-ink/15">
+                        <tr>
+                            <th class="p-2.5">Studente</th>
+                            <th class="p-2.5">Email</th>
+                            <th class="p-2.5 text-center">Conferma Email</th>
+                            <th class="p-2.5 text-center">Lezioni Fatte</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roster-table-body" class="divide-y divide-ink/10 bg-white">
+                        <tr>
+                            <td colspan="4" class="p-4 text-center text-brown-sub italic">Nessuno studente ha ancora effettuato l'accesso.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button onclick="closeRosterModal()" class="px-4 py-2 bg-petrol text-white text-xs font-lato-bold uppercase tracking-wider rounded-sm hover:bg-petrol-dark">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE 5: Configurazione Invio Automatico Email (EmailJS per Docente) -->
+    <div id="email-config-modal" class="fixed inset-0 bg-ink/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border border-ink max-w-md w-full p-6 rounded-sm shadow-xl">
+            <div class="flex items-center justify-between border-b border-ink/15 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-lato-bold uppercase tracking-widest text-brown-sub">Impostazioni Docente</span>
+                    <h3 class="font-serif text-lg font-bold text-petrol">Invio Email Automatico (EmailJS)</h3>
+                </div>
+                <button onclick="closeEmailConfigModal()" aria-label="Chiudi finestra" class="text-black/60 hover:text-black">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-black/80 mb-3 leading-relaxed">
+                Per inviare email silenziose in automatico senza aprire il client di posta dello studente, inserisci le chiavi gratuite di <strong>EmailJS</strong> (opzionale):
+            </p>
+            <form onsubmit="saveEmailConfig(event)" class="space-y-3 text-xs">
+                <div>
+                    <label for="ejs-service-id" class="block font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Service ID</label>
+                    <input id="ejs-service-id" type="text" placeholder="service_xxxxxxx" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol">
+                </div>
+                <div>
+                    <label for="ejs-template-id" class="block font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Template ID</label>
+                    <input id="ejs-template-id" type="text" placeholder="template_xxxxxxx" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol">
+                </div>
+                <div>
+                    <label for="ejs-public-key" class="block font-lato-bold uppercase tracking-wider text-brown-sub mb-1">Public Key</label>
+                    <input id="ejs-public-key" type="text" placeholder="user_xxxxxxxxxxxx" class="w-full border border-ink/30 bg-paper px-3 py-2 rounded-sm focus:outline-none focus:border-petrol">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeEmailConfigModal()" class="px-4 py-2 border border-ink/30 font-lato-bold uppercase tracking-wider rounded-sm hover:bg-surface-warm">Annulla</button>
+                    <button type="submit" class="px-4 py-2 bg-petrol text-white font-lato-bold uppercase tracking-wider rounded-sm hover:bg-petrol-dark">Salva Impostazioni</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const ADMIN_USER = 'admin';
+        const ADMIN_PASS = '100celle';
+
+        const defaultDynamicItems = [
+            {
+                id: 'demo-1',
+                column: '3',
+                title: 'Come usare la schermata della chat',
+                description: 'A sinistra trovi le vecchie chat e il tasto "+ Nuova Chat". In basso scrivi la domanda, alleghi un PDF con la graffetta o parli al microfono.',
+                createdAt: Date.now()
+            }
+        ];
+
+        const moduleFolders = [
+            { id: '1.1', label: 'Cartella 1.1 — Cos\'è e a cosa serve' },
+            { id: '1.2', label: 'Cartella 1.2 — Come ragiona e sceglie' },
+            { id: '1.3', label: 'Cartella 1.3 — Quali strumenti usare' },
+            { id: '2', label: 'Cartella 2–5 — Lezioni successive' }
+        ];
+
+        const defaultStudyMaterials = [
+            { id: 'mat-1', folder: '1.1', type: 'Tavole 1–5', title: 'I 4 livelli dell\'AI & Ricetta vs Esempi' },
+            { id: 'mat-2', folder: '1.1', type: 'Guida Facile', title: 'Come usare Notebook LLM con i propri PDF' },
+            { id: 'mat-3', folder: '1.2', type: 'Tavole 6–10', title: 'Il gioco delle probabilità e gli errori dell\'AI' },
+            { id: 'mat-4', folder: '1.3', type: 'Tavole 11–14', title: 'ChatGPT, Gemini e Copilot + Regole Privacy' },
+            { id: 'mat-5', folder: '2', type: 'Tavole 15–17', title: 'Foto, voce, video e i 3 limiti dell\'AI' }
+        ];
+
+        const glossaryTerms = [
+            { term: "ACCESSIBILITÀ DIGITALE", desc: "Principio secondo cui tutti, comprese le persone con disabilità, devono poter accedere e utilizzare in modo semplice ed efficace contenuti e servizi digitali." },
+            { term: "AESTHETIC", desc: "Stile, atmosfera o identità visiva e culturale (es. Cottagecore, Dark Academia) adottata per esprimersi sulle piattaforme social." },
+            { term: "AI ACT", desc: "Regolamento (UE) 2024/1689 che disciplina l'intelligenza artificiale classificando i sistemi in 4 livelli di rischio (inaccettabile, alto, limitato, minimo)." },
+            { term: "AI AGENT", desc: "Sistema di IA configurato con obiettivi precisi in grado di pianificare ed eseguire compiti in autonomia, superando il chatbot reattivo." },
+            { term: "AI ENERGY CONSUMPTION", desc: "Elevato consumo di energia elettrica e di acqua necessario per addestrare, alimentare e raffreddare i data center dei modelli di IA." },
+            { term: "AI GENERATIVA", desc: "Sistemi capaci di creare nuovi contenuti originali (testo, immagini, audio, codice) a partire da istruzioni testuali (prompt)." },
+            { term: "ALFABETIZZAZIONE DIGITALE", desc: "Comprensione critica dei meccanismi del mondo connesso: costruzione dell'informazione, logiche algoritmiche ed economia dei dati." },
+            { term: "ALGORITMO", desc: "Sequenza finita di regole e calcoli matematici per risolvere un problema o apprendere schemi dai dati." },
+            { term: "ALIAS", desc: "Pseudonimo o identità secondaria usata online per proteggere la privacy o separare i contesti di vita, ferma restando la responsabilità etica." },
+            { term: "ALLUCINAZIONI (AI HALLUCINATIONS)", desc: "Informazioni plausibili ma fattualmente errate o inventate generate da un modello AI su base probabilistica." },
+            { term: "ARTIBUTLER", desc: "Assistenti IA proattivi integrati nei flussi quotidiani che sintetizzano notizie, note e promemoria personali." },
+            { term: "BIAS", desc: "Pregiudizi sistematici o scorciatoie cognitive ereditati dai dati di addestramento che distorcono le risposte degli algoritmi." },
+            { term: "BIOMETRIA", desc: "Misurazione di caratteristiche fisiche o comportamentali uniche (impronte, iride, volto, voce) usate come credenziali di identificazione." },
+            { term: "BLACK BOX", desc: "Sistemi di machine learning il cui processo interno di elaborazione tra input e output resta opaco e non spiegabile." },
+            { term: "BLOCKCHAIN", desc: "Registro digitale distribuito, crittografato e immutabile validato da una rete peer-to-peer senza autorità centrale." },
+            { term: "BUBBLE FILTER", desc: "Ecosistema informativo personalizzato creato dagli algoritmi che mostra solo contenuti affini alle preferenze pregresse dell'utente." },
+            { term: "BUG", desc: "Errore o difetto nel codice sorgente di un software che provoca un funzionamento anomalo o imprevisto." },
+            { term: "CANCEL CULTURE", desc: "Pratica sociale di boicottaggio o isolamento pubblico online nei confronti di figure o opere ritenute offensive." },
+            { term: "CAROUSEL", desc: "Formato multi-slide sui social media progettato per aumentare il tempo di permanenza e l'interazione dell'utente." },
+            { term: "CHATBOT", desc: "Software progettato per simulare una conversazione umana tramite testo o voce, oggi basato su reti neurali e LLM." },
+            { term: "CLICK WORK", desc: "Micro-mansioni ripetitive svolte da lavoratori umani (etichettatura dati, moderazione) per addestrare i sistemi di IA." },
+            { term: "CLICKBAIT", desc: "Titolo o anteprima sensazionalistica progettata per stimolare la curiosità emotiva e generare clic o traffico pubblicitario." },
+            { term: "CLOUD COMPUTING", desc: "Erogazione on-demand di risorse informatiche (archiviazione, software, calcolo) su server remoti accessibili via Internet." },
+            { term: "CLOUT CHASING", desc: "Ricerca ossessiva di visibilità e notorietà sui social network a prescindere dal valore reale dei contenuti." },
+            { term: "CODICE", desc: "Insieme di istruzioni scritte in linguaggi di programmazione che costituiscono la struttura logica di software e piattaforme." },
+            { term: "COOKIE", desc: "Piccoli file di testo salvati dal browser sul dispositivo per memorizzare preferenze di sessione o tracciare la navigazione." },
+            { term: "CRITTOGRAFIA", desc: "Tecniche matematiche per cifrare le informazioni rendendole leggibili solo a chi possiede la chiave di decodifica (es. End-to-End)." },
+            { term: "CRONOWORKING", desc: "Metodologie digitali di gestione del tempo volte a contrastare la frammentazione dell'attenzione causata dall'iperconnessione." },
+            { term: "CYBER WAR", desc: "Azioni offensive nello spazio cibernetico volte a danneggiare o spiare infrastrutture critiche di una nazione." },
+            { term: "CYBERSQUATTING", desc: "Registrazione in malafede di nomi di dominio corrispondenti a marchi o nomi noti per rivenderli a scopo speculativo." },
+            { term: "DARK PATTERN", desc: "Scelte di design delle interfacce concepite per ingannare o manipolare l'utente spingendolo a cedere dati o abbonarsi." },
+            { term: "DATA BREACH", desc: "Incidente di sicurezza che comporta la perdita, divulgazione o accesso non autorizzato a dati personali." },
+            { term: "DATA POISONING", desc: "Manipolazione intenzionale dei dataset di addestramento con dati falsi o distorti per compromettere l'affidabilità di un modello AI." },
+            { term: "DEEPFAKE", desc: "Sintesi o manipolazione di video, audio e immagini tramite deep learning per simulare parole o azioni mai avvenute." },
+            { term: "DIGITAL DETOX", desc: "Periodo di astensione consapevole dai dispositivi digitali per ridurre lo stress e recuperare la concentrazione." },
+            { term: "DIGITAL DIVIDE", desc: "Disuguaglianza nell'accesso, nell'uso e nelle competenze relative alle tecnologie digitali e all'AI tra diverse fasce della popolazione." },
+            { term: "DIGITAL ECONOMY", desc: "Attività economiche basate su tecnologie digitali e piattaforme, in cui i dati personali rappresentano un asset primario." },
+            { term: "DIGITAL FOOTPRINT", desc: "Insieme delle tracce attive (post, commenti) e passive (IP, metadati) lasciate durante la navigazione in rete." },
+            { term: "DIGITAL TWIN", desc: "Replica virtuale e dinamica di un oggetto, processo o persona aggiornata in tempo reale tramite flussi di dati." },
+            { term: "DISSING", desc: "Sfida verbale o provocazione che sui social network degenera spesso in scontro personale e gogna mediatica." },
+            { term: "DOOMSCROLLING", desc: "Tendenza compulsiva a scorrere continuamente notizie negative o catastrofiche online, generando ansia e affaticamento." },
+            { term: "ECHO CHAMBER", desc: "Ambiente comunicativo in cui l'utente si confronta solo con voci e opinioni che confermano le proprie convinzioni preesistenti." },
+            { term: "ENGAGEMENT", desc: "Insieme delle interazioni attive (like, commenti, condivisioni, salvataggi) usate dagli algoritmi per amplificare un contenuto." },
+            { term: "ETICA DIGITALE (ALGORETICA)", desc: "Disciplina che integra principi morali nella progettazione degli algoritmi (ethics by design) sotto supervisione umana." },
+            { term: "EXPLAINABILITY", desc: "Capacità di un sistema automatizzato di fornire spiegazioni comprensibili sulla logica seguita per giungere a una decisione." },
+            { term: "FACT-CHECKING", desc: "Attività metodica di verifica della veridicità delle notizie, delle affermazioni e delle fonti informative." },
+            { term: "FIGITALE", desc: "Integrazione tra dimensione fisica e digitale in un'unica esperienza continua (concetto legato all'Onlife di Luciano Floridi)." },
+            { term: "FINE-TUNING", desc: "Addestramento aggiuntivo con cui un modello AI pre-esistente viene specializzato su un set ristretto di dati per compiti mirati." },
+            { term: "FINGERPRINT", desc: "Raccolta di parametri tecnici del browser e del dispositivo per identificare univocamente un utente anche senza cookie." },
+            { term: "FINSTA", desc: "Account social secondario e privato usato per condividere contenuti spontanei con una cerchia ristretta di amici." },
+            { term: "FIRMA DIGITALE", desc: "Strumento crittografico che garantisce autenticità, integrità e pieno valore legale a un documento informatico." },
+            { term: "FOMO (FEAR OF MISSING OUT)", desc: "Ansia sociale derivante dal timore costante di essere esclusi da eventi, tendenze o conversazioni rilevanti online." },
+            { term: "GALATEO DIGITALE", desc: "Norme comportamentali ed etiche di rispetto, trasparenza e responsabilità negli ambienti digitali e nell'uso dell'IA." },
+            { term: "GAMIFICAZIONE", desc: "Uso di meccaniche di gioco (punti, livelli, badge) in contesti non ludici per aumentare il coinvolgimento." },
+            { term: "GOBLIN MODE", desc: "Rifiuto consapevole delle aspettative di perfezione estetica e iper-produttività imposte dai social media." },
+            { term: "HACKER HATS", desc: "Classificazione degli esperti di sicurezza informatica in base alle finalità: etici (White Hat), malevoli (Black Hat) o ibridi (Grey Hat)." },
+            { term: "HTTPS", desc: "Protocollo crittografato di trasferimento dati sul Web che garantisce l'autenticità del sito e protegge le comunicazioni." },
+            { term: "HUMAN-IN-THE-LOOP", desc: "Principio operativo e normativo secondo cui l'essere umano mantiene il controllo critico e la decisione finale nei processi AI." },
+            { term: "IDENTITÀ DIGITALE (SPID / CIE)", desc: "Insieme delle credenziali certificate che permettono di dimostrare in modo univoco la propria identità nei servizi online." },
+            { term: "INCLUSIONE DIGITALE", desc: "Condizione in cui tutti possono accedere e usare efficacemente le tecnologie grazie a infrastrutture, competenze e accessibilità." },
+            { term: "INDIRIZZO IP", desc: "Codice numerico univoco assegnato a ogni dispositivo connesso a una rete informatica per l'instradamento dei dati." },
+            { term: "INFEZIONE DIGITALE", desc: "Compromissione di un sistema informatico causata da download non verificati o link malevoli." },
+            { term: "INFLUENCER E CONTENT CREATOR", desc: "Figure capaci di orientare opinioni, tendenze e consumi sui social media attraverso community fidelizzate." },
+            { term: "INSTANT CHECKOUT", desc: "Integrazione dei pagamenti direttamente nelle interfacce conversazionali di chatbot e AI Agent." },
+            { term: "INTERNET ADDICTION (IAD)", desc: "Uso compulsivo e incontrollato della rete tale da interferire negativamente con la salute e le relazioni quotidiane." },
+            { term: "JOMO (JOY OF MISSING OUT)", desc: "Serenità derivante dalla scelta consapevole di disconnettersi e non partecipare al flusso continuo dei trend online." },
+            { term: "MAIN CHARACTER ENERGY", desc: "Tendenza a narrare la propria quotidianità sui social con taglio cinematografico ponendosi costantemente al centro della scena." },
+            { term: "MALWARE", desc: "Software malevolo (virus, worm, ransomware, spyware, trojan) progettato per danneggiare, spiare o bloccare un sistema." },
+            { term: "MEDIA SINTETICI", desc: "Immagini, audio, video e testi generati interamente o parzialmente da algoritmi di intelligenza artificiale." },
+            { term: "METANOMICS", desc: "Insieme delle transazioni economiche e commerciali condotte all'interno di mondi virtuali e metaversi." },
+            { term: "MFA FATIGUE ATTACK", desc: "Attacco che invia notifiche ripetute di autenticazione a più fattori finché la vittima non approva l'accesso per sfinimento." },
+            { term: "MICROTARGETING", desc: "Segmentazione pubblicitaria o politica basata sull'incrocio di dati personali per inviare messaggi mirati a singoli profili." },
+            { term: "MINING", desc: "Processo computazionale di validazione delle transazioni su blockchain (Proof of Work) ad alto consumo energetico." },
+            { term: "MODERAZIONE DEI CONTENUTI", desc: "Verifica umana o algoritmica della conformità dei post rispetto alle leggi e ai regolamenti delle piattaforme." },
+            { term: "NETIQUETTE", desc: "Insieme delle regole informali di buona educazione, rispetto e convivenza civile nelle interazioni online." },
+            { term: "NEUROETHICS & NEURORIGHTS", desc: "Studio delle implicazioni etiche delle neurotecnologie e tutela giuridica della privacy mentale e libertà cognitiva." },
+            { term: "OPEN DATA", desc: "Dati pubblici accessibili a chiunque, in formati aperti e riutilizzabili senza restrizioni di licenza." },
+            { term: "OPEN SCIENCE", desc: "Movimento che promuove l'accesso libero e trasparente a pubblicazioni, dati e metodologie della ricerca scientifica." },
+            { term: "PAYWALL", desc: "Sistema che subordina l'accesso ai contenuti di un sito web a un abbonamento o all'accettazione dei cookie di profilazione." },
+            { term: "PHISHING", desc: "Truffa informatica in cui l'attaccante finge di essere un ente affidabile per sottrarre password o dati finanziari." },
+            { term: "PHOTO DUMP", desc: "Raccolta di fotografie apparentemente casuali e non ritoccate pubblicata sui social per comunicare spontaneità." },
+            { term: "PLAY-TO-EARN", desc: "Modello videoludico basato su blockchain che ricompensa le azioni di gioco con token o NFT scambiabili." },
+            { term: "PODCASTING", desc: "Distribuzione di contenuti audio on-demand focalizzati su approfondimento, narrazione e ascolto attivo." },
+            { term: "PRIVACY POLICY", desc: "Informativa legale che illustra finalità, modalità e diritti relativi al trattamento dei dati personali secondo il GDPR." },
+            { term: "PROFILAZIONE", desc: "Trattamento automatizzato dei dati personali per analizzare o prevedere preferenze, comportamenti e spostamenti." },
+            { term: "PROMPT", desc: "Istruzione o contesto testuale fornito dall'utente per guidare la generazione di un modello AI." },
+            { term: "PROMPT ENGINEERING", desc: "Competenza nel progettare istruzioni, contesti e vincoli precisi per ottenere output accurati dai modelli generativi." },
+            { term: "QUANTUM SUPREMACY", desc: "Momento in cui un computer quantistico esegue un calcolo impossibile in tempi ragionevoli per un computer classico." },
+            { term: "QUIET QUITTING", desc: "Rispetto rigoroso dell'orario e delle mansioni contrattuali rifiutando l'iper-reperibilità digitale non retribuita." },
+            { term: "RABBIT HOLE", desc: "Percorso di navigazione compulsiva in cui gli algoritmi di raccomandazione trattengono l'utente da un contenuto all'altro." },
+            { term: "RATIO", desc: "Metrica social in cui un post riceve molte più risposte critiche che apprezzamenti, segnalando dissenso collettivo." },
+            { term: "RETE NEURALE ARTIFICIALE", desc: "Architettura software a nodi interconnessi organizzati in strati che apprende schemi complessi da grandi moli di dati." },
+            { term: "RGPD / GDPR", desc: "Regolamento (UE) 2016/679 sulla protezione dei dati personali, fondato su trasparenza, minimizzazione e accountability." },
+            { term: "SCREENSHOT", desc: "Cattura visiva istantanea dello schermo che trasforma un contenuto effimero in una prova digitale permanente." },
+            { term: "SHADOWBAN", desc: "Riduzione invisibile della visibilità dei contenuti di un utente da parte di una piattaforma senza notifica esplicita." },
+            { term: "SHARE (CONDIVISIONE)", desc: "Rilancio di un contenuto nella propria rete di contatti, che comporta una responsabilità diretta sulla sua diffusione." },
+            { term: "SICUREZZA IoT", desc: "Misure tecniche per proteggere gli oggetti domestici e industriali connessi in rete da accessi non autorizzati." },
+            { term: "SINGOLARITÀ TECNOLOGICA", desc: "Ipotesi teorica sul momento in cui l'IA supererà l'intelligenza umana avviando un auto-miglioramento continuo." },
+            { term: "SOCIAL ENGINEERING", desc: "Manipolazione psicologica (pretexting, baiting, phishing) per indurre una persona a rivelare informazioni riservate." },
+            { term: "SOVRANITÀ DIGITALE", desc: "Capacità di individui o comunità di mantenere il controllo autonomo sui propri dati, infrastrutture e scelte tecnologiche." },
+            { term: "SPOOFING", desc: "Falsificazione tecnica dell'identità digitale (mittente email, numero telefonico, IP) per apparire attendibili." },
+            { term: "SPUNTA BLU", desc: "Contrassegno di verifica dell'autenticità di un profilo social, oggi spesso legato anche a modelli in abbonamento." },
+            { term: "STORYTELLING", desc: "Strutturazione narrativa delle informazioni per coinvolgere emotivamente il pubblico e fissare significati." },
+            { term: "TOKEN (UNITÀ DI TESTO)", desc: "Unità minima in cui un modello linguistico suddivide il testo (parola, sillaba o punteggiatura) per elaborarlo matematicamente." },
+            { term: "TOKEN E TOKENIZZAZIONE", desc: "Conversione dei diritti su un bene reale o digitale in un codice identificativo univoco registrato su blockchain." },
+            { term: "TRANSFORMER", desc: "Architettura di rete neurale basata sul meccanismo di Self-Attention alla base dei moderni Large Language Models." },
+            { term: "TROLL", desc: "Utente che pubblica messaggi provocatori o fuori tema nelle discussioni online al solo scopo di disturbare." },
+            { term: "UGC (USER GENERATED CONTENT)", desc: "Contenuti (video, testi, recensioni) creati dagli utenti che costituiscono l'ossatura informativa delle piattaforme." },
+            { term: "UPLOAD", desc: "Trasferimento di un file da un dispositivo locale a un server remoto, rendendone complessa la rimozione definitiva." },
+            { term: "USER (UTENTE)", desc: "Soggetto che utilizza un servizio digitale fornendo al contempo dati comportamentali alla piattaforma." },
+            { term: "VIRTUAL REALITY (VR)", desc: "Simulazione tridimensionale immersiva fruibile tramite visori dedicati che isolano dall'ambiente fisico." },
+            { term: "VOICE CLONING", desc: "Sintesi vocale basata su IA in grado di replicare fedelmente timbro e intonazione di una persona da brevi campioni audio." },
+            { term: "WHALING", desc: "Attacco di phishing mirato ad alti dirigenti o figure apicali per sottrarre capitali o dati strategici." },
+            { term: "ZERO-SHOT / FEW-SHOT PROMPTING", desc: "Tecniche di prompting che chiedono all'AI di svolgere un compito senza esempi (Zero-Shot) o con pochi esempi guidati (Few-Shot)." },
+            { term: "ZOOMER O GEN Z", desc: "Generazione nata tra fine anni '90 e 2010, cresciuta in modo nativo con smartphone, social media e linguaggi digitali." }
+        ];
+
+        let db = null;
+        let auth = null;
+        let firebaseUser = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let dynamicItems = [...defaultDynamicItems];
+        let studyMaterials = [...defaultStudyMaterials];
+        let openFolders = new Set(['1.1']);
+        let currentUserRole = null; // 'student' | 'admin'
+        let currentStudent = null;
+        let allStudentsRoster = [];
+        let emailConfig = { serviceId: '', templateId: '', publicKey: '' };
+
+        function normalizeEmailKey(email) {
+            return email.trim().toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
+        }
+
+        function setConnectionStatus(label, isConnected) {
+            const statusEl = document.getElementById('sync-status');
+            const dotEl = document.getElementById('sync-dot');
+            const loginStatusEl = document.getElementById('login-sync-status');
+            const loginDotEl = document.getElementById('login-sync-dot');
+
+            if (statusEl) statusEl.textContent = label;
+            if (loginStatusEl) loginStatusEl.textContent = label;
+            if (isConnected) {
+                if (dotEl) { dotEl.classList.remove('bg-amber-500'); dotEl.classList.add('bg-emerald-600'); }
+                if (loginDotEl) { loginDotEl.classList.remove('bg-amber-400'); loginDotEl.classList.add('bg-emerald-400'); }
+            }
+        }
+
+        async function initCloud() {
+            renderDynamicModules();
+            renderStudyFolders();
+            renderGlossary();
+
+            try {
+                if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                    setConnectionStatus('Sessione locale', false);
+                    return;
+                }
+
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    firebaseUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    firebaseUser = cred.user;
+                }
+
+                if (!firebaseUser) return;
+
+                setConnectionStatus('Cloud Connesso', true);
+
+                const courseDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'corso_ai_state', 'main');
+                onSnapshot(courseDocRef, (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (Array.isArray(data.dynamicItems)) {
+                            dynamicItems = data.dynamicItems;
+                            renderDynamicModules();
+                        }
+                        if (Array.isArray(data.studyMaterials)) {
+                            studyMaterials = data.studyMaterials;
+                            renderStudyFolders();
+                        }
+                        if (data.emailConfig) {
+                            emailConfig = data.emailConfig;
+                        }
+                    } else {
+                        setDoc(courseDocRef, {
+                            dynamicItems,
+                            studyMaterials
+                        }).catch(() => {});
+                    }
+                }, (err) => {
+                    console.error('Errore sincronizzazione corso:', err);
+                });
+
+                const studentsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'studenti_corso_ai');
+                onSnapshot(studentsColRef, (snapshot) => {
+                    const list = [];
+                    snapshot.forEach(docSnap => {
+                        list.push(docSnap.data());
+                    });
+                    list.sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''));
+                    allStudentsRoster = list;
+                    renderRosterTable();
+
+                    if (currentStudent && currentStudent.email) {
+                        const updatedSelf = list.find(s => s.email === currentStudent.email);
+                        if (updatedSelf) {
+                            currentStudent = updatedSelf;
+                            updateStudentUI();
+                        }
+                    }
+                }, (err) => {
+                    console.error('Errore lettura studenti:', err);
+                });
+
+            } catch (e) {
+                console.error('Init cloud error:', e);
+                setConnectionStatus('Offline', false);
+            }
+        }
+
+        // Gestione Tab Login Iniziale
+        window.switchLoginTab = function(tab) {
+            const tabStudent = document.getElementById('tab-student-login');
+            const tabAdmin = document.getElementById('tab-admin-login');
+            const formStudent = document.getElementById('form-student-gateway');
+            const formAdmin = document.getElementById('form-admin-gateway');
+
+            document.getElementById('gw-student-error').classList.add('hidden');
+            document.getElementById('gw-admin-error').classList.add('hidden');
+
+            if (tab === 'admin') {
+                tabAdmin.className = 'py-3.5 bg-white text-petrol border-b-2 border-terracotta border-l border-ink/15 transition-colors flex items-center justify-center gap-2';
+                tabStudent.className = 'py-3.5 bg-surface-warm text-brown-sub hover:text-ink transition-colors flex items-center justify-center gap-2';
+                formStudent.classList.add('hidden');
+                formAdmin.classList.remove('hidden');
+            } else {
+                tabStudent.className = 'py-3.5 bg-white text-petrol border-b-2 border-terracotta transition-colors flex items-center justify-center gap-2';
+                tabAdmin.className = 'py-3.5 bg-surface-warm text-brown-sub hover:text-ink border-l border-ink/15 transition-colors flex items-center justify-center gap-2';
+                formAdmin.classList.add('hidden');
+                formStudent.classList.remove('hidden');
+            }
+        };
+
+        function enterAppShell(role) {
+            currentUserRole = role;
+            document.getElementById('login-gateway').classList.add('hidden');
+            const shell = document.getElementById('app-shell');
+            shell.classList.remove('hidden');
+            shell.classList.add('flex');
+
+            if (role === 'admin') {
+                setMode('editor');
+            } else {
+                setMode('student');
+                updateStudentUI();
+            }
+        }
+
+        window.logoutSession = function() {
+            currentUserRole = null;
+            currentStudent = null;
+            document.body.classList.remove('mode-editor');
+            document.getElementById('editor-banner').classList.add('hidden');
+            dismissEmailBanner();
+
+            const shell = document.getElementById('app-shell');
+            shell.classList.add('hidden');
+            shell.classList.remove('flex');
+            document.getElementById('login-gateway').classList.remove('hidden');
+            document.getElementById('form-admin-gateway').reset();
+        };
+
+        // Accesso / Registrazione Studente
+        window.handleStudentGatewaySubmit = async function(event) {
+            event.preventDefault();
+            const firstName = document.getElementById('gw-first-name').value.trim();
+            const lastName = document.getElementById('gw-last-name').value.trim();
+            const email = document.getElementById('gw-email').value.trim().toLowerCase();
+            const errEl = document.getElementById('gw-student-error');
+            const btn = document.getElementById('gw-student-btn');
+
+            if (!firstName || !lastName || !email || !email.includes('@')) {
+                errEl.textContent = 'Inserisci nome, cognome e un indirizzo email valido.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            let existingLessons = 0;
+
+            if (db && firebaseUser) {
+                try {
+                    const studentId = normalizeEmailKey(email);
+                    const studentDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'studenti_corso_ai', studentId);
+                    const snap = await getDoc(studentDocRef);
+                    if (snap.exists()) {
+                        existingLessons = Number(snap.data().completedLessons) || 0;
+                    }
+                } catch (e) {
+                    console.error('Errore recupero studente:', e);
+                }
+            }
+
+            currentStudent = {
+                firstName,
+                lastName,
+                email,
+                completedLessons: existingLessons,
+                confirmationSent: true,
+                confirmationSentAt: new Date().toISOString()
+            };
+
+            await persistStudentProfile();
+            enterAppShell('student');
+            await triggerConfirmationEmail(currentStudent);
+            btn.disabled = false;
+        };
+
+        // Accesso Admin (admin / 100celle)
+        window.handleAdminGatewaySubmit = function(event) {
+            event.preventDefault();
+            const userVal = document.getElementById('gw-admin-user').value.trim();
+            const passVal = document.getElementById('gw-admin-pass').value;
+            const errEl = document.getElementById('gw-admin-error');
+
+            if (userVal === ADMIN_USER && passVal === ADMIN_PASS) {
+                errEl.classList.add('hidden');
+                enterAppShell('admin');
+            } else {
+                errEl.textContent = 'Credenziali non valide. Verifica utente e password.';
+                errEl.classList.remove('hidden');
+            }
+        };
+
+        async function persistCourseState() {
+            if (!db || !firebaseUser) return;
+            try {
+                const courseDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'corso_ai_state', 'main');
+                await setDoc(courseDocRef, {
+                    dynamicItems,
+                    studyMaterials,
+                    emailConfig,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.error('Errore salvataggio corso:', e);
+            }
+        }
+
+        async function persistStudentProfile() {
+            if (!db || !firebaseUser || !currentStudent || !currentStudent.email) return;
+            try {
+                const studentId = normalizeEmailKey(currentStudent.email);
+                const studentDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'studenti_corso_ai', studentId);
+                await setDoc(studentDocRef, {
+                    firstName: currentStudent.firstName,
+                    lastName: currentStudent.lastName,
+                    email: currentStudent.email,
+                    completedLessons: currentStudent.completedLessons,
+                    confirmationSent: currentStudent.confirmationSent || true,
+                    confirmationSentAt: currentStudent.confirmationSentAt || new Date().toISOString(),
+                    lastAccess: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.error('Errore salvataggio studente:', e);
+            }
+        }
+
+        async function triggerConfirmationEmail(student) {
+            const subject = encodeURIComponent("Conferma iscrizione — Corso: Capire e Usare l'Intelligenza Artificiale");
+            const body = encodeURIComponent(
+                `Ciao ${student.firstName} ${student.lastName},\n\n` +
+                `la tua registrazione al corso "Capire e Usare l'Intelligenza Artificiale" è stata confermata!\n\n` +
+                `• Email registrata: ${student.email}\n` +
+                `• Prossima lezione: Introduzione 1 — 16/11/26\n` +
+                `• Lezioni completate finora: ${student.completedLessons} / 5\n\n` +
+                `Buono studio!`
+            );
+            const mailtoUrl = `mailto:${encodeURIComponent(student.email)}?subject=${subject}&body=${body}`;
+
+            const banner = document.getElementById('email-confirmation-banner');
+            const bannerText = document.getElementById('email-confirmation-text');
+            const mailtoLink = document.getElementById('mailto-fallback-link');
+            mailtoLink.href = mailtoUrl;
+
+            if (emailConfig && emailConfig.serviceId && emailConfig.templateId && emailConfig.publicKey) {
+                try {
+                    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            service_id: emailConfig.serviceId,
+                            template_id: emailConfig.templateId,
+                            user_id: emailConfig.publicKey,
+                            template_params: {
+                                to_name: `${student.firstName} ${student.lastName}`,
+                                to_email: student.email,
+                                course_name: "Capire e Usare l'Intelligenza Artificiale",
+                                lessons_completed: `${student.completedLessons} / 5`
+                            }
+                        })
+                    });
+                    if (res.ok) {
+                        bannerText.innerHTML = `<strong>Email di conferma inviata a ${escapeHtml(student.email)}!</strong> Controlla la tua casella di posta.`;
+                        banner.classList.remove('hidden');
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Invio EmailJS non riuscito, attivo ricevuta locale:', err);
+                }
+            }
+
+            bannerText.innerHTML = `<strong>Registrazione confermata per ${escapeHtml(student.firstName)} (${escapeHtml(student.email)})!</strong> Ricevuta email pronta.`;
+            banner.classList.remove('hidden');
+        }
+
+        window.dismissEmailBanner = function() {
+            document.getElementById('email-confirmation-banner').classList.add('hidden');
+        };
+
+        window.openEmailConfigModal = function() {
+            document.getElementById('ejs-service-id').value = emailConfig.serviceId || '';
+            document.getElementById('ejs-template-id').value = emailConfig.templateId || '';
+            document.getElementById('ejs-public-key').value = emailConfig.publicKey || '';
+            const modal = document.getElementById('email-config-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeEmailConfigModal = function() {
+            const modal = document.getElementById('email-config-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.saveEmailConfig = async function(event) {
+            event.preventDefault();
+            emailConfig = {
+                serviceId: document.getElementById('ejs-service-id').value.trim(),
+                templateId: document.getElementById('ejs-template-id').value.trim(),
+                publicKey: document.getElementById('ejs-public-key').value.trim()
+            };
+            closeEmailConfigModal();
+            await persistCourseState();
+        };
+
+        function updateStudentUI() {
+            if (!currentStudent) return;
+            document.getElementById('student-display-name').textContent = `${currentStudent.firstName} ${currentStudent.lastName}`;
+            document.getElementById('student-display-email').textContent = currentStudent.email;
+            document.getElementById('completed-lessons-count').textContent = currentStudent.completedLessons || 0;
+        }
+
+        function renderRosterTable() {
+            const tbody = document.getElementById('roster-table-body');
+            const badge = document.getElementById('roster-count-badge');
+            badge.textContent = allStudentsRoster.length;
+
+            if (allStudentsRoster.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-brown-sub italic">Nessuno studente ha ancora effettuato l'accesso.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            allStudentsRoster.forEach(st => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-paper/60';
+                tr.innerHTML = `
+                    <td class="p-2.5 font-lato-bold text-black/90">${escapeHtml(st.firstName || '')} ${escapeHtml(st.lastName || '')}</td>
+                    <td class="p-2.5 text-brown-sub">${escapeHtml(st.email || '')}</td>
+                    <td class="p-2.5 text-center">
+                        <span class="px-2 py-0.5 bg-editorial-green/15 text-editorial-green font-lato-bold rounded-sm text-[10px] uppercase">Confermata</span>
+                    </td>
+                    <td class="p-2.5 text-center font-lato-bold text-petrol">${Number(st.completedLessons) || 0} / 5</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.openRosterModal = function() {
+            const modal = document.getElementById('roster-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeRosterModal = function() {
+            const modal = document.getElementById('roster-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.scrollToSection = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+
+        window.toggleSidebarSection = function(contentId, chevronId) {
+            const content = document.getElementById(contentId);
+            const chevron = document.getElementById(chevronId);
+            if (!content) return;
+
+            const isHidden = content.classList.contains('hidden');
+            content.classList.toggle('hidden');
+            if (chevron) {
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        };
+
+        window.openModuleDetail = function() {
+            const modal = document.getElementById('open-detail-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeModuleDetail = function() {
+            const modal = document.getElementById('open-detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.updateCompletedLessons = async function(delta) {
+            if (!currentStudent) return;
+            const nextVal = Math.max(0, Math.min(5, (currentStudent.completedLessons || 0) + delta));
+            currentStudent.completedLessons = nextVal;
+            updateStudentUI();
+            await persistStudentProfile();
+        };
+
+        window.setMode = function(mode) {
+            if (currentUserRole !== 'admin' && mode === 'editor') return;
+
+            const btnStudent = document.getElementById('btn-student');
+            const btnEditor = document.getElementById('btn-editor');
+            const banner = document.getElementById('editor-banner');
+
+            if (mode === 'editor') {
+                document.body.classList.add('mode-editor');
+                if (btnEditor) {
+                    btnEditor.classList.remove('bg-surface-warm', 'text-black/90');
+                    btnEditor.classList.add('bg-petrol', 'text-white');
+                }
+                if (btnStudent) {
+                    btnStudent.classList.remove('bg-petrol', 'text-white');
+                    btnStudent.classList.add('bg-surface-warm', 'text-black/90');
+                }
+                banner.classList.remove('hidden');
+            } else {
+                document.body.classList.remove('mode-editor');
+                if (btnStudent) {
+                    btnStudent.classList.remove('bg-surface-warm', 'text-black/90');
+                    btnStudent.classList.add('bg-petrol', 'text-white');
+                }
+                if (btnEditor) {
+                    btnEditor.classList.remove('bg-petrol', 'text-white');
+                    btnEditor.classList.add('bg-surface-warm', 'text-black/90');
+                }
+                banner.classList.add('hidden');
+            }
+        };
+
+        window.toggleModal = function() {
+            const modal = document.getElementById('module-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        };
+
+        window.toggleMaterialModal = function(preselectFolder) {
+            const modal = document.getElementById('material-modal');
+            if (preselectFolder) {
+                document.getElementById('mat-folder').value = preselectFolder;
+            }
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        };
+
+        window.toggleFolder = function(folderId) {
+            if (openFolders.has(folderId)) {
+                openFolders.delete(folderId);
+            } else {
+                openFolders.add(folderId);
+            }
+            renderStudyFolders();
+        };
+
+        window.addNewModule = async function(event) {
+            event.preventDefault();
+            const column = document.getElementById('mod-column').value;
+            const title = document.getElementById('mod-title').value.trim();
+            const description = document.getElementById('mod-desc').value.trim();
+            if (!title || !description) return;
+
+            dynamicItems.push({
+                id: 'mod-' + Date.now(),
+                column,
+                title,
+                description,
+                createdAt: Date.now()
+            });
+            renderDynamicModules();
+            document.getElementById('new-module-form').reset();
+            toggleModal();
+            await persistCourseState();
+        };
+
+        window.removeModule = async function(id) {
+            dynamicItems = dynamicItems.filter(item => item.id !== id);
+            renderDynamicModules();
+            await persistCourseState();
+        };
+
+        window.addStudyMaterial = async function(event) {
+            event.preventDefault();
+            const folder = document.getElementById('mat-folder').value;
+            const type = document.getElementById('mat-type').value.trim();
+            const title = document.getElementById('mat-title').value.trim();
+            if (!type || !title) return;
+
+            studyMaterials.push({ id: 'mat-' + Date.now(), folder, type, title });
+            openFolders.add(folder);
+            renderStudyFolders();
+            document.getElementById('new-material-form').reset();
+            toggleMaterialModal();
+            await persistCourseState();
+        };
+
+        window.removeStudyMaterial = async function(id) {
+            studyMaterials = studyMaterials.filter(item => item.id !== id);
+            renderStudyFolders();
+            await persistCourseState();
+        };
+
+        function renderDynamicModules() {
+            ['1', '2', '3'].forEach(col => {
+                const container = document.getElementById(`col-${col}-dynamic`);
+                container.innerHTML = '';
+                dynamicItems.filter(i => i.column === col).forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-paper border border-ink/20 p-3.5 rounded-sm relative';
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                            <span class="text-[11px] font-lato-bold uppercase tracking-wider text-brown-sub flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group text-xs"></i> ${escapeHtml(item.title)}
+                            </span>
+                            <button onclick="removeModule('${item.id}')" title="Elimina scheda" class="editor-only text-black/40 hover:text-terracotta text-xs">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-black/90 leading-relaxed">${escapeHtml(item.description)}</p>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+        }
+
+        function renderStudyFolders() {
+            const container = document.getElementById('study-folders-container');
+            container.innerHTML = '';
+
+            moduleFolders.forEach(folder => {
+                const files = studyMaterials.filter(m => m.folder === folder.id);
+                const isOpen = openFolders.has(folder.id);
+
+                const folderWrapper = document.createElement('div');
+                folderWrapper.className = 'bg-white border border-ink/20 rounded-sm overflow-hidden';
+
+                const headerBtn = document.createElement('button');
+                headerBtn.type = 'button';
+                headerBtn.onclick = () => toggleFolder(folder.id);
+                headerBtn.className = 'w-full px-2.5 py-2 flex items-center justify-between text-left hover:bg-paper transition-colors';
+                headerBtn.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i class="fa-solid ${isOpen ? 'fa-folder-open text-terracotta' : 'fa-folder text-brown-sub'} text-xs shrink-0"></i>
+                        <span class="font-lato-bold text-[11px] text-black/90 truncate">${escapeHtml(folder.label)}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0 ml-1">
+                        <span class="text-[10px] font-lato-bold px-1.5 py-0.2 bg-surface-warm text-brown-sub rounded-sm">${files.length}</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-brown-sub transition-transform ${isOpen ? 'rotate-180' : ''}"></i>
+                    </div>
+                `;
+                folderWrapper.appendChild(headerBtn);
+
+                if (isOpen) {
+                    const bodyDiv = document.createElement('div');
+                    bodyDiv.className = 'border-t border-ink/10 bg-paper/60 p-2 space-y-1.5';
+
+                    if (files.length === 0) {
+                        bodyDiv.innerHTML = `<p class="text-[11px] italic text-brown-sub/70 px-1">Cartella vuota</p>`;
+                    } else {
+                        files.forEach(mat => {
+                            const itemEl = document.createElement('div');
+                            itemEl.className = 'bg-white p-2 border border-ink/15 rounded-sm flex items-start justify-between gap-2 text-xs';
+                            itemEl.innerHTML = `
+                                <div class="min-w-0">
+                                    <span class="font-lato-bold text-brown-sub block uppercase text-[9px] tracking-wider">${escapeHtml(mat.type)}</span>
+                                    <span class="font-lato-bold text-black/90 text-[11px] leading-snug block">${escapeHtml(mat.title)}</span>
+                                </div>
+                                <button onclick="removeStudyMaterial('${mat.id}')" title="Rimuovi file" class="editor-only text-black/40 hover:text-terracotta text-xs mt-0.5 shrink-0">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            `;
+                            bodyDiv.appendChild(itemEl);
+                        });
+                    }
+
+                    const quickAddBtn = document.createElement('button');
+                    quickAddBtn.type = 'button';
+                    quickAddBtn.onclick = () => toggleMaterialModal(folder.id);
+                    quickAddBtn.className = 'editor-only w-full justify-center items-center gap-1 text-[10px] font-lato-bold uppercase tracking-wider text-petrol hover:text-terracotta py-1 border border-dashed border-petrol/40 rounded-sm mt-1';
+                    quickAddBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Aggiungi in ${escapeHtml(folder.id)}`;
+                    bodyDiv.appendChild(quickAddBtn);
+
+                    folderWrapper.appendChild(bodyDiv);
+                }
+
+                container.appendChild(folderWrapper);
+            });
+        }
+
+        function renderGlossary() {
+            const grid = document.getElementById('glossary-grid');
+            const badge = document.getElementById('glossary-count-badge');
+            grid.innerHTML = '';
+            badge.textContent = `${glossaryTerms.length} voci`;
+
+            glossaryTerms.forEach(item => {
+                const box = document.createElement('div');
+                box.setAttribute('data-term', item.term.toLowerCase());
+                box.setAttribute('data-desc', item.desc.toLowerCase());
+                box.onclick = function() { highlightTerm(this); };
+                box.className = 'glossary-item bg-white border border-ink/15 p-2.5 rounded-sm cursor-pointer transition-colors hover:border-petrol';
+                box.innerHTML = `
+                    <h4 class="font-lato-bold text-[11px] uppercase tracking-wider text-terracotta mb-1">${escapeHtml(item.term)}</h4>
+                    <p class="text-[11px] text-black/90 leading-snug">${escapeHtml(item.desc)}</p>
+                `;
+                grid.appendChild(box);
+            });
+        }
+
+        window.filterGlossary = function() {
+            const query = document.getElementById('glossary-search').value.trim().toLowerCase();
+            const items = document.querySelectorAll('.glossary-item');
+            const badge = document.getElementById('glossary-count-badge');
+            let visibleCount = 0;
+
+            items.forEach(el => {
+                const term = el.getAttribute('data-term') || '';
+                const desc = el.getAttribute('data-desc') || '';
+                if (term.includes(query) || desc.includes(query)) {
+                    el.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            badge.textContent = query ? `${visibleCount} / ${glossaryTerms.length}` : `${glossaryTerms.length} voci`;
+            const emptyMsg = document.getElementById('glossary-empty');
+            if (visibleCount === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+        };
+
+        window.highlightTerm = function(el) {
+            if (el.classList.contains('bg-petrol-light')) {
+                el.classList.remove('bg-petrol-light');
+                el.classList.add('bg-white');
+            } else {
+                el.classList.remove('bg-white');
+                el.classList.add('bg-petrol-light');
+            }
+        };
+
+        window.exportCourseData = function() {
+            const payload = {
+                corso: "Capire e Usare l'Intelligenza Artificiale",
+                lezioneCorrente: "Introduzione 1 — 16/11/26",
+                esportatoIl: new Date().toISOString(),
+                indiceProgramma: [
+                    { lezione: "1", titolo: "Le Basi dell'AI", punti: ["1.1 Cos'è e a cosa serve", "1.2 Come ragiona e sceglie", "1.3 Quali strumenti usare"] },
+                    { lezione: "2", titolo: "Chiedere e Controllare", punti: ["2.1 Scrivere domande chiare", "2.2 Errori dell'AI e controllo umano"] },
+                    { lezione: "3", titolo: "Privacy e Sicurezza", punti: ["3.1 Proteggere i propri dati", "3.2 Usare bene le chat"] },
+                    { lezione: "4", titolo: "Immagini, Voce e Video", punti: ["4.1 Leggere e creare foto", "4.2 Usare foto, audio e testi insieme"] },
+                    { lezione: "5", titolo: "Regole e Limiti dell'AI", punti: ["5.1 Cosa l'AI non sa fare", "5.2 Pregiudizi e prova finale"] }
+                ],
+                cartelleMaterialeDiStudio: moduleFolders.map(f => ({
+                    cartella: f.label,
+                    risorse: studyMaterials.filter(m => m.folder === f.id)
+                })),
+                studentiRegistrati: currentUserRole === 'admin' ? allStudentsRoster : [],
+                glossarioBase: glossaryTerms.map(g => g.term),
+                contenutiAggiunti: dynamicItems
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "programma-corso-ai.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        };
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        window.onload = function() {
+            initCloud();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #F7F5F0;
+  --color-surface-warm: #EFECE6;
+  --color-ink: #1A1A1A;
+  --color-petrol: #1B4D5C;
+  --color-petrol-dark: #123540;
+  --color-petrol-light: #DCE8EC;
+  --color-terracotta: #C85A32;
+  --color-brown-sub: #6E473B;
+  --color-editorial-green: #246A4E;
+  --color-ochre-index: #F6E8B1;
+  --color-ochre-border: #D9C27E;
+
+  --font-lato: 'Lato', sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+@layer base {
+  body {
+    background-color: #F7F5F0;
+    color: #1A1A1A;
+    font-family: 'Lato', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-lato {
+  font-family: 'Lato', sans-serif;
+}
+
+.font-lato-bold {
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+}
+
+.editorial-card {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(26, 26, 26, 0.18);
+  box-shadow: 3px 3px 0px rgba(26, 26, 26, 0.08);
+}
+
+.editorial-card-interactive {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(26, 26, 26, 0.18);
+  box-shadow: 3px 3px 0px rgba(26, 26, 26, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.editorial-card-interactive:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px rgba(26, 26, 26, 0.12);
+  border-color: rgba(27, 77, 92, 0.4);
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: rgba(26, 26, 26, 0.05);
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(27, 77, 92, 0.35);
+  border-radius: 2px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(27, 77, 92, 0.6);
+}
