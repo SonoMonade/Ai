@@ -1,26 +1,33 @@
 import React, { useState } from 'react';
 import { StudentProfile } from '../../types';
-import { X, Search, UserPlus, Download, CheckCircle2, Minus, Plus, Edit3, Trash2, Save, Phone, Mail } from 'lucide-react';
+import { X, Search, UserPlus, Download, CheckCircle2, Minus, Plus, Edit3, Trash2, Save, Phone, Mail, Clock, Check, XCircle } from 'lucide-react';
 
 interface RosterModalProps {
   isOpen: boolean;
   onClose: () => void;
   students: StudentProfile[];
+  pendingStudents: StudentProfile[];
   onUpdateStudentLessons: (email: string, delta: number) => void;
   onAddStudentManual: (student: StudentProfile) => void;
   onEditStudent: (originalEmail: string, student: StudentProfile) => void;
   onDeleteStudent: (email: string) => void;
+  onAcceptPendingStudent: (email: string) => void;
+  onRejectPendingStudent: (email: string) => void;
 }
 
 export const RosterModal: React.FC<RosterModalProps> = ({
   isOpen,
   onClose,
   students,
+  pendingStudents,
   onUpdateStudentLessons,
   onAddStudentManual,
   onEditStudent,
-  onDeleteStudent
+  onDeleteStudent,
+  onAcceptPendingStudent,
+  onRejectPendingStudent
 }) => {
+  const [activeTab, setActiveTab] = useState<'registered' | 'pending'>(pendingStudents.length > 0 ? 'pending' : 'registered');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEmail, setEditingEmail] = useState<string | null>(null);
@@ -33,7 +40,11 @@ export const RosterModal: React.FC<RosterModalProps> = ({
 
   if (!isOpen) return null;
 
-  const filtered = students.filter(s =>
+  const filteredRegistered = students.filter(s =>
+    `${s.firstName} ${s.lastName} ${s.email} ${s.phone || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredPending = pendingStudents.filter(s =>
     `${s.firstName} ${s.lastName} ${s.email} ${s.phone || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -65,7 +76,6 @@ export const RosterModal: React.FC<RosterModalProps> = ({
     if (!cleanFirst || !cleanLast || !cleanEmail || !cleanEmail.includes('@')) return;
 
     if (editingEmail) {
-      // Edit existing
       const existing = students.find(s => s.email.toLowerCase() === editingEmail.toLowerCase());
       const updated: StudentProfile = {
         ...(existing || {
@@ -81,7 +91,6 @@ export const RosterModal: React.FC<RosterModalProps> = ({
       };
       onEditStudent(editingEmail, updated);
     } else {
-      // Add new
       onAddStudentManual({
         firstName: cleanFirst,
         lastName: cleanLast,
@@ -126,10 +135,10 @@ export const RosterModal: React.FC<RosterModalProps> = ({
         <div className="flex items-center justify-between border-b border-[#1A1A1A]/15 pb-3 mb-4">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E473B]">
-              Monitoraggio Classe • Docente
+              Amministrazione Corso • Sezione Docente
             </span>
             <h3 className="font-serif text-xl font-bold text-[#C85A32]">
-              Registro Studenti & Schede Anagrafiche ({students.length})
+              Registro Studenti & Approvazione Richieste
             </h3>
           </div>
           <button
@@ -138,6 +147,34 @@ export const RosterModal: React.FC<RosterModalProps> = ({
             className="text-[#1A1A1A]/60 hover:text-[#1A1A1A] cursor-pointer"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tab Switcher: Registered vs Pending Requests */}
+        <div className="grid grid-cols-2 border-b border-[#1A1A1A]/15 text-xs font-bold uppercase tracking-wider mb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            className={`py-2.5 flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+              activeTab === 'pending'
+                ? 'bg-[#1B4D5C] text-white border-b-2 border-[#C85A32]'
+                : 'bg-[#EFECE6] text-[#6E473B] hover:text-[#1A1A1A]'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-amber-300" />
+            <span>Richieste in Attesa ({pendingStudents.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('registered')}
+            className={`py-2.5 flex items-center justify-center gap-2 border-l border-[#1A1A1A]/15 transition-colors cursor-pointer ${
+              activeTab === 'registered'
+                ? 'bg-[#1B4D5C] text-white border-b-2 border-[#C85A32]'
+                : 'bg-[#EFECE6] text-[#6E473B] hover:text-[#1A1A1A]'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+            <span>Studenti Iscritti ({students.length})</span>
           </button>
         </div>
 
@@ -155,19 +192,21 @@ export const RosterModal: React.FC<RosterModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (showAddForm) {
-                  setShowAddForm(false);
-                } else {
-                  handleStartAdd();
-                }
-              }}
-              className="px-3 py-1.5 bg-[#1B4D5C] hover:bg-[#123540] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>{showAddForm ? 'Chiudi Modulo' : 'Nuovo Studente'}</span>
-            </button>
+            {activeTab === 'registered' && (
+              <button
+                onClick={() => {
+                  if (showAddForm) {
+                    setShowAddForm(false);
+                  } else {
+                    handleStartAdd();
+                  }
+                }}
+                className="px-3 py-1.5 bg-[#1B4D5C] hover:bg-[#123540] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{showAddForm ? 'Chiudi Modulo' : 'Nuovo Studente'}</span>
+              </button>
+            )}
             <button
               onClick={handleExportCsv}
               className="px-3 py-1.5 bg-[#EFECE6] hover:bg-[#1A1A1A] hover:text-white text-[#1A1A1A] text-xs font-bold uppercase tracking-wider rounded-sm transition-colors border border-[#1A1A1A]/20 flex items-center gap-1.5 cursor-pointer"
@@ -179,7 +218,7 @@ export const RosterModal: React.FC<RosterModalProps> = ({
         </div>
 
         {/* Add / Edit Student Form with Salva button */}
-        {showAddForm && (
+        {showAddForm && activeTab === 'registered' && (
           <form onSubmit={handleSaveStudent} className="p-4 bg-[#F7F5F0] border border-[#1A1A1A]/20 rounded-sm mb-3 space-y-3 text-xs">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[#6E473B] uppercase tracking-wider text-[11px]">
@@ -259,106 +298,176 @@ export const RosterModal: React.FC<RosterModalProps> = ({
           </form>
         )}
 
-        {/* Roster Table */}
-        <div className="overflow-y-auto flex-1 border border-[#1A1A1A]/20 rounded-sm custom-scroll">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-[#EFECE6] text-[#6E473B] uppercase tracking-wider border-b border-[#1A1A1A]/15 sticky top-0">
-              <tr>
-                <th className="p-2.5">Studente</th>
-                <th className="p-2.5">Contatti (Email & Tel)</th>
-                <th className="p-2.5 text-center">Progresso Incontri</th>
-                <th className="p-2.5 text-center">Aggiorna Incontri</th>
-                <th className="p-2.5 text-center">Azioni Scheda</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1A1A1A]/10 bg-white">
-              {filtered.length === 0 ? (
+        {/* Tab Content: Pending Requests */}
+        {activeTab === 'pending' && (
+          <div className="overflow-y-auto flex-1 border border-[#1A1A1A]/20 rounded-sm custom-scroll">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#EFECE6] text-[#6E473B] uppercase tracking-wider border-b border-[#1A1A1A]/15 sticky top-0">
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-[#6E473B] italic">
-                    Nessuno studente corrisponde ai criteri di ricerca.
-                  </td>
+                  <th className="p-2.5">Studente richiedente</th>
+                  <th className="p-2.5">Contatti (Email & Tel)</th>
+                  <th className="p-2.5 text-center">Data Richiesta</th>
+                  <th className="p-2.5 text-center">Decisione Docente</th>
                 </tr>
-              ) : (
-                filtered.map((st) => (
-                  <tr key={st.email} className="hover:bg-[#F7F5F0]/60 transition-colors">
-                    <td className="p-2.5 font-bold text-[#1A1A1A]">
-                      <div className="text-sm font-serif text-[#1B4D5C]">
-                        {st.lastName} {st.firstName}
-                      </div>
-                      <span className="text-[10px] text-[#6E473B] font-normal">
-                        Iscritto il {st.enrolledAt.slice(0, 10)}
-                      </span>
-                    </td>
-                    <td className="p-2.5 space-y-0.5">
-                      <div className="flex items-center gap-1 text-[#1A1A1A] font-mono text-[11px]">
-                        <Mail className="w-3 h-3 text-[#6E473B]" />
-                        <span>{st.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[#6E473B] font-mono text-[11px]">
-                        <Phone className="w-3 h-3 text-[#C85A32]" />
-                        <span>{st.phone || 'Nessun telefono'}</span>
-                      </div>
-                    </td>
-                    <td className="p-2.5 text-center font-bold text-[#1B4D5C]">
-                      <span className="bg-[#1B4D5C]/10 px-2 py-0.5 rounded-sm">
-                        {st.completedLessons} / 10
-                      </span>
-                    </td>
-                    <td className="p-2.5 text-center">
-                      <div className="inline-flex items-center gap-1">
-                        <button
-                          onClick={() => onUpdateStudentLessons(st.email, -1)}
-                          disabled={st.completedLessons <= 0}
-                          title="Diminuisci incontro completato"
-                          className="w-5 h-5 bg-[#EFECE6] hover:bg-[#1A1A1A] hover:text-white rounded-xs text-xs font-bold transition-colors disabled:opacity-30 cursor-pointer flex items-center justify-center"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => onUpdateStudentLessons(st.email, 1)}
-                          disabled={st.completedLessons >= 10}
-                          title="Aggiungi incontro completato"
-                          className="w-5 h-5 bg-[#1B4D5C] hover:bg-[#123540] text-white rounded-xs text-xs font-bold transition-colors disabled:opacity-30 cursor-pointer flex items-center justify-center"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="p-2.5 text-center">
-                      <div className="inline-flex items-center gap-1.5 justify-center">
-                        <button
-                          type="button"
-                          onClick={() => handleStartEdit(st)}
-                          title="Modifica scheda studente"
-                          className="p-1 bg-[#EFECE6] hover:bg-[#1B4D5C] hover:text-white text-[#1B4D5C] rounded-xs transition-colors cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(`Sei sicuro di voler eliminare lo studente ${st.lastName} ${st.firstName}?`)) {
-                              onDeleteStudent(st.email);
-                            }
-                          }}
-                          title="Elimina studente"
-                          className="p-1 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 rounded-xs transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody className="divide-y divide-[#1A1A1A]/10 bg-white">
+                {filteredPending.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-[#6E473B] italic">
+                      Nessuna richiesta di iscrizione in attesa di approvazione.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredPending.map((st) => (
+                    <tr key={st.email} className="hover:bg-[#F7F5F0]/60 transition-colors">
+                      <td className="p-2.5 font-bold text-[#1A1A1A]">
+                        <div className="text-sm font-serif text-[#C85A32]">
+                          {st.lastName} {st.firstName}
+                        </div>
+                      </td>
+                      <td className="p-2.5 space-y-0.5">
+                        <div className="flex items-center gap-1 text-[#1A1A1A] font-mono text-[11px]">
+                          <Mail className="w-3 h-3 text-[#6E473B]" />
+                          <span>{st.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[#6E473B] font-mono text-[11px]">
+                          <Phone className="w-3 h-3 text-[#1B4D5C]" />
+                          <span>{st.phone || 'Nessun telefono'}</span>
+                        </div>
+                      </td>
+                      <td className="p-2.5 text-center text-[#6E473B]">
+                        {st.enrolledAt ? st.enrolledAt.slice(0, 10) : 'Oggi'}
+                      </td>
+                      <td className="p-2.5 text-center">
+                        <div className="inline-flex items-center gap-2 justify-center">
+                          <button
+                            type="button"
+                            onClick={() => onAcceptPendingStudent(st.email)}
+                            className="px-3 py-1 bg-[#246A4E] hover:bg-[#1b503b] text-white font-bold uppercase text-[10px] tracking-wider rounded-sm flex items-center gap-1 shadow-2xs cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Accetta</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onRejectPendingStudent(st.email)}
+                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-bold uppercase text-[10px] tracking-wider rounded-sm flex items-center gap-1 shadow-2xs cursor-pointer"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Rifiuta</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tab Content: Registered Students Table */}
+        {activeTab === 'registered' && (
+          <div className="overflow-y-auto flex-1 border border-[#1A1A1A]/20 rounded-sm custom-scroll">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#EFECE6] text-[#6E473B] uppercase tracking-wider border-b border-[#1A1A1A]/15 sticky top-0">
+                <tr>
+                  <th className="p-2.5">Studente</th>
+                  <th className="p-2.5">Contatti (Email & Tel)</th>
+                  <th className="p-2.5 text-center">Progresso Incontri</th>
+                  <th className="p-2.5 text-center">Aggiorna Incontri</th>
+                  <th className="p-2.5 text-center">Azioni Scheda</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1A1A1A]/10 bg-white">
+                {filteredRegistered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-[#6E473B] italic">
+                      Nessuno studente iscritto corrisponde ai criteri di ricerca.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRegistered.map((st) => (
+                    <tr key={st.email} className="hover:bg-[#F7F5F0]/60 transition-colors">
+                      <td className="p-2.5 font-bold text-[#1A1A1A]">
+                        <div className="text-sm font-serif text-[#1B4D5C]">
+                          {st.lastName} {st.firstName}
+                        </div>
+                        <span className="text-[10px] text-[#6E473B] font-normal">
+                          Iscritto il {st.enrolledAt ? st.enrolledAt.slice(0, 10) : '2026'}
+                        </span>
+                      </td>
+                      <td className="p-2.5 space-y-0.5">
+                        <div className="flex items-center gap-1 text-[#1A1A1A] font-mono text-[11px]">
+                          <Mail className="w-3 h-3 text-[#6E473B]" />
+                          <span>{st.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[#6E473B] font-mono text-[11px]">
+                          <Phone className="w-3 h-3 text-[#C85A32]" />
+                          <span>{st.phone || 'Nessun telefono'}</span>
+                        </div>
+                      </td>
+                      <td className="p-2.5 text-center font-bold text-[#1B4D5C]">
+                        <span className="bg-[#1B4D5C]/10 px-2 py-0.5 rounded-sm">
+                          {st.completedLessons} / 10
+                        </span>
+                      </td>
+                      <td className="p-2.5 text-center">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            onClick={() => onUpdateStudentLessons(st.email, -1)}
+                            disabled={st.completedLessons <= 0}
+                            title="Diminuisci incontro completato"
+                            className="w-5 h-5 bg-[#EFECE6] hover:bg-[#1A1A1A] hover:text-white rounded-xs text-xs font-bold transition-colors disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => onUpdateStudentLessons(st.email, 1)}
+                            disabled={st.completedLessons >= 10}
+                            title="Aggiungi incontro completato"
+                            className="w-5 h-5 bg-[#1B4D5C] hover:bg-[#123540] text-white rounded-xs text-xs font-bold transition-colors disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-2.5 text-center">
+                        <div className="inline-flex items-center gap-1.5 justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(st)}
+                            title="Modifica scheda studente"
+                            className="p-1 bg-[#EFECE6] hover:bg-[#1B4D5C] hover:text-white text-[#1B4D5C] rounded-xs transition-colors cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Sei sicuro di voler eliminare lo studente ${st.lastName} ${st.firstName}?`)) {
+                                onDeleteStudent(st.email);
+                              }
+                            }}
+                            title="Elimina studente"
+                            className="p-1 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 rounded-xs transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#1A1A1A]/10">
           <span className="text-[11px] text-[#6E473B]">
-            Totale iscritti nel registro: <strong>{students.length}</strong>
+            Richieste in attesa: <strong>{pendingStudents.length}</strong> • Studenti iscritti: <strong>{students.length}</strong>
           </span>
           <button
             onClick={onClose}

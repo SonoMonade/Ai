@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { UserRole, StudentProfile } from '../types';
-import { GraduationCap, ShieldCheck, Mail, User, Lock, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, ShieldCheck, Mail, User, Lock, ArrowRight, Sparkles, Clock } from 'lucide-react';
 
 interface LoginGatewayProps {
   onLoginStudent: (student: StudentProfile) => void;
   onLoginAdmin: () => void;
   syncConnected: boolean;
   registeredStudents: StudentProfile[];
+  pendingStudents: StudentProfile[];
+  onAddPendingStudent: (student: StudentProfile) => void;
   onClose?: () => void;
 }
 
@@ -15,15 +17,20 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
   onLoginAdmin,
   syncConnected,
   registeredStudents,
+  pendingStudents,
+  onAddPendingStudent,
   onClose
 }) => {
   const [activeTab, setActiveTab] = useState<UserRole>('student');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [adminUser, setAdminUser] = useState('');
   const [adminPass, setAdminPass] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [pendingNoticeEmail, setPendingNoticeEmail] = useState<string | null>(null);
 
   const handleStudentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,34 +38,39 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
     const cleanFirst = firstName.trim();
     const cleanLast = lastName.trim();
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
 
     if (!cleanFirst || !cleanLast || !cleanEmail || !cleanEmail.includes('@')) {
       setErrorMsg('Inserisci un nome, un cognome e un indirizzo email valido.');
       return;
     }
 
-    const existing = registeredStudents.find(
+    // Check if approved in registeredStudents
+    const approved = registeredStudents.find(
       s => s.email.toLowerCase() === cleanEmail
     );
 
-    const completedCount = existing ? Math.min(10, Math.max(0, existing.completedLessons)) : 1;
-    const defaultEncounters = Array.from({ length: completedCount }, (_, i) => i + 1);
+    if (approved) {
+      // Log in immediately
+      onLoginStudent(approved);
+      return;
+    }
 
-    const studentData: StudentProfile = {
+    // If not approved yet, create or check pending request
+    const newStudent: StudentProfile = {
       firstName: cleanFirst,
       lastName: cleanLast,
       email: cleanEmail,
-      completedLessons: completedCount,
-      completedEncounters: existing?.completedEncounters && existing.completedEncounters.length > 0
-        ? existing.completedEncounters
-        : defaultEncounters,
-      confirmationSent: true,
-      confirmationSentAt: new Date().toISOString(),
-      enrolledAt: existing ? existing.enrolledAt : new Date().toISOString(),
+      phone: cleanPhone,
+      completedLessons: 1,
+      completedEncounters: [1],
+      confirmationSent: false,
+      enrolledAt: new Date().toISOString(),
       lastAccess: new Date().toISOString()
     };
 
-    onLoginStudent(studentData);
+    onAddPendingStudent(newStudent);
+    setPendingNoticeEmail(cleanEmail);
   };
 
   const handleAdminSubmit = (e: React.FormEvent) => {
@@ -72,11 +84,13 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
     }
   };
 
-  const quickFillStudent = (name: string, surname: string, mail: string) => {
+  const quickFillStudent = (name: string, surname: string, mail: string, tel: string) => {
     setFirstName(name);
     setLastName(surname);
     setEmail(mail);
+    setPhone(tel);
     setErrorMsg('');
+    setPendingNoticeEmail(null);
   };
 
   return (
@@ -119,7 +133,7 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
             Capire e Usare l'Intelligenza Artificiale
           </h1>
           <p className="text-xs sm:text-sm text-white/85 mt-1.5">
-            Aula digitale interattiva per studenti e docenti • Guida semplice passo dopo passo
+            Aula digitale interattiva per studenti e docenti • Richiesta di iscrizione con approvazione
           </p>
         </div>
 
@@ -135,7 +149,7 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
             }`}
           >
             <GraduationCap className="w-4 h-4" />
-            <span>Studente</span>
+            <span>Sezione Studente</span>
           </button>
           <button
             type="button"
@@ -147,22 +161,56 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>Docente / Admin</span>
+            <span>Sezione Docente</span>
           </button>
         </div>
 
         {/* Form Container */}
         <div className="p-6 sm:p-7 bg-white">
-          {activeTab === 'student' ? (
+          {pendingNoticeEmail ? (
+            <div className="space-y-4 text-center py-4">
+              <div className="w-14 h-14 bg-amber-100 text-[#C85A32] rounded-full flex items-center justify-center mx-auto mb-2 shadow-2xs">
+                <Clock className="w-7 h-7 animate-pulse" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-[#1B4D5C]">
+                Richiesta di Iscrizione Inviata al Docente
+              </h3>
+              <p className="text-xs text-[#1A1A1A]/85 leading-relaxed max-w-md mx-auto">
+                La tua richiesta per l'indirizzo <strong>{pendingNoticeEmail}</strong> è stata inoltrata con successo. Il docente (<strong>glr.angelini@gmail.com</strong>) deve accettare la richiesta dal registro di amministrazione affinché tu possa accedere all'aula.
+              </p>
+              <div className="p-3 bg-[#F7F5F0] border border-[#1A1A1A]/15 rounded-sm text-xs text-[#6E473B]">
+                Vuoi accedere subito con un account di test già accettato (es. Giulia Bianchi o Marco Rossi)?
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingNoticeEmail(null);
+                    quickFillStudent('Giulia', 'Bianchi', 'giulia.bianchi@lsa.it', '+39 333 1122334');
+                  }}
+                  className="w-full py-2.5 bg-[#1B4D5C] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#123540] cursor-pointer"
+                >
+                  Usa Account Test Approvato (Giulia Bianchi)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingNoticeEmail(null)}
+                  className="text-xs text-[#6E473B] hover:underline cursor-pointer pt-1"
+                >
+                  Invia un'altra richiesta o modifica email
+                </button>
+              </div>
+            </div>
+          ) : activeTab === 'student' ? (
             <form onSubmit={handleStudentSubmit} className="space-y-4 text-sm">
               <div className="bg-[#F7F5F0] border-l-2 border-[#1B4D5C] p-3.5 text-xs text-[#1A1A1A]/90 leading-relaxed">
-                <strong>Accesso Studente:</strong> Inserisci Nome, Cognome ed Email per entrare subito nell'aula digitale e accedere alle lezioni del corso.
+                <strong>Iscrizione al Corso:</strong> Inserisci i tuoi dati e il numero di telefono. La richiesta verrà inviata al docente per l'approvazione. Se sei già stato accettato, entrerai immediatamente.
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label htmlFor="student-fname" className="block text-xs font-bold uppercase tracking-wider text-[#6E473B] mb-1">
-                    Nome
+                    Nome *
                   </label>
                   <div className="relative">
                     <User className="w-3.5 h-3.5 absolute left-3 top-3 text-[#6E473B]/70" />
@@ -179,7 +227,7 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
                 </div>
                 <div>
                   <label htmlFor="student-lname" className="block text-xs font-bold uppercase tracking-wider text-[#6E473B] mb-1">
-                    Cognome
+                    Cognome *
                   </label>
                   <div className="relative">
                     <User className="w-3.5 h-3.5 absolute left-3 top-3 text-[#6E473B]/70" />
@@ -196,20 +244,35 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="student-email" className="block text-xs font-bold uppercase tracking-wider text-[#6E473B] mb-1">
-                  Indirizzo Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-[#6E473B]/70" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label htmlFor="student-email" className="block text-xs font-bold uppercase tracking-wider text-[#6E473B] mb-1">
+                    Indirizzo Email *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-[#6E473B]/70" />
+                    <input
+                      id="student-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="giulia@esempio.it"
+                      className="w-full pl-9 pr-3 py-2.5 border border-[#1A1A1A]/25 bg-[#F7F5F0] rounded-sm focus:outline-none focus:border-[#1B4D5C] text-[#1A1A1A]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="student-phone" className="block text-xs font-bold uppercase tracking-wider text-[#6E473B] mb-1">
+                    Telefono
+                  </label>
                   <input
-                    id="student-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="giulia.bianchi@esempio.it"
-                    className="w-full pl-9 pr-3 py-2.5 border border-[#1A1A1A]/25 bg-[#F7F5F0] rounded-sm focus:outline-none focus:border-[#1B4D5C] text-[#1A1A1A]"
+                    id="student-phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+39 333 1234567"
+                    className="w-full px-3 py-2.5 border border-[#1A1A1A]/25 bg-[#F7F5F0] rounded-sm focus:outline-none focus:border-[#1B4D5C] text-[#1A1A1A] font-mono text-xs"
                   />
                 </div>
               </div>
@@ -225,26 +288,26 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
                 className="w-full py-3 bg-[#C85A32] hover:bg-[#b04b25] text-white border border-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-sm transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
                 <ArrowRight className="w-4 h-4" />
-                <span>Entra nell'Aula Studente</span>
+                <span>Invia Richiesta di Iscrizione al Docente</span>
               </button>
 
               {/* Quick test student button */}
               <div className="pt-2 border-t border-[#1A1A1A]/10 flex items-center justify-between text-xs text-[#6E473B]">
-                <span>Vuoi provare subito come studente?</span>
+                <span>Vuoi provare subito un account già accettato?</span>
                 <button
                   type="button"
-                  onClick={() => quickFillStudent('Marco', 'Rossi', 'marco.rossi@lsa.it')}
+                  onClick={() => quickFillStudent('Giulia', 'Bianchi', 'giulia.bianchi@lsa.it', '+39 333 1122334')}
                   className="font-bold underline text-[#1B4D5C] hover:text-[#C85A32] cursor-pointer flex items-center gap-1"
                 >
                   <Sparkles className="w-3 h-3" />
-                  <span>Compila Demo</span>
+                  <span>Usa Giulia Bianchi</span>
                 </button>
               </div>
             </form>
           ) : (
             <form onSubmit={handleAdminSubmit} className="space-y-4 text-sm">
               <div className="bg-[#F7F5F0] border-l-2 border-[#C85A32] p-3.5 text-xs text-[#1A1A1A]/90 leading-relaxed">
-                <strong>Area Riservata Docenti:</strong> accesso protetto riservato ai docenti autorizzati per la gestione del corso e del registro.
+                <strong>Area Riservata Docenti:</strong> accesso protetto riservato ai due docenti autorizzati per accettare/rifiutare le richieste d'iscrizione e gestire il registro.
               </div>
 
               <div>

@@ -109,6 +109,22 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_ROSTER;
   });
 
+  // Pending student registration requests
+  const [pendingStudents, setPendingStudents] = useState<StudentProfile[]>(() => {
+    const saved = localStorage.getItem('ai_course_v2_pending_students');
+    return saved ? JSON.parse(saved) : [
+      {
+        firstName: 'Federico',
+        lastName: 'Neri',
+        email: 'federico.neri@esempio.it',
+        phone: '+39 349 9876543',
+        completedLessons: 0,
+        confirmationSent: false,
+        enrolledAt: new Date().toISOString()
+      }
+    ];
+  });
+
   // Dynamic cards added by teacher
   const [dynamicCards, setDynamicCards] = useState<DynamicCard[]>(() => {
     const saved = localStorage.getItem('ai_course_v2_cards');
@@ -163,6 +179,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('ai_course_v2_roster', JSON.stringify(registeredStudents));
   }, [registeredStudents]);
+
+  useEffect(() => {
+    localStorage.setItem('ai_course_v2_pending_students', JSON.stringify(pendingStudents));
+  }, [pendingStudents]);
 
   useEffect(() => {
     localStorage.setItem('ai_course_v2_cards', JSON.stringify(dynamicCards));
@@ -307,8 +327,41 @@ export default function App() {
     }
   };
 
+  const handleUpdateStudentProfile = (updated: StudentProfile) => {
+    setCurrentStudent(updated);
+    setRegisteredStudents(prev =>
+      prev.map(s => s.email.toLowerCase() === updated.email.toLowerCase() ? updated : s)
+    );
+  };
+
   const handleDeleteStudent = (email: string) => {
     setRegisteredStudents(prev => prev.filter(s => s.email.toLowerCase() !== email.toLowerCase()));
+  };
+
+  const handleAddPendingStudent = (student: StudentProfile) => {
+    setPendingStudents(prev => {
+      const exists = prev.some(s => s.email.toLowerCase() === student.email.toLowerCase());
+      const alreadyRegistered = registeredStudents.some(s => s.email.toLowerCase() === student.email.toLowerCase());
+      if (exists || alreadyRegistered) return prev;
+      return [student, ...prev];
+    });
+  };
+
+  const handleAcceptPendingStudent = (email: string) => {
+    const studentToAccept = pendingStudents.find(s => s.email.toLowerCase() === email.toLowerCase());
+    if (studentToAccept) {
+      const accepted: StudentProfile = {
+        ...studentToAccept,
+        confirmationSent: true,
+        confirmationSentAt: new Date().toISOString()
+      };
+      setRegisteredStudents(prev => [accepted, ...prev]);
+      setPendingStudents(prev => prev.filter(s => s.email.toLowerCase() !== email.toLowerCase()));
+    }
+  };
+
+  const handleRejectPendingStudent = (email: string) => {
+    setPendingStudents(prev => prev.filter(s => s.email.toLowerCase() !== email.toLowerCase()));
   };
 
   // Dynamic cards
@@ -491,6 +544,8 @@ export default function App() {
               setAddMaterialFolderId('M1');
               setIsAddMaterialModalOpen(true);
             }}
+            currentStudent={currentStudent}
+            onUpdateStudentProfile={handleUpdateStudentProfile}
           />
 
           {/* Bottom 4 Panels: Glossary, Books, Study Folders, Notebook & Quiz */}
@@ -529,6 +584,8 @@ export default function App() {
             onLoginAdmin={handleLoginAdmin}
             syncConnected={true}
             registeredStudents={registeredStudents}
+            pendingStudents={pendingStudents}
+            onAddPendingStudent={handleAddPendingStudent}
             onClose={() => setIsLoginGatewayOpen(false)}
           />
         </div>
@@ -570,10 +627,13 @@ export default function App() {
         isOpen={isRosterModalOpen}
         onClose={() => setIsRosterModalOpen(false)}
         students={registeredStudents}
+        pendingStudents={pendingStudents}
         onUpdateStudentLessons={handleUpdateStudentLessonsInRoster}
         onAddStudentManual={handleAddStudentManual}
         onEditStudent={handleEditStudent}
         onDeleteStudent={handleDeleteStudent}
+        onAcceptPendingStudent={handleAcceptPendingStudent}
+        onRejectPendingStudent={handleRejectPendingStudent}
       />
 
       {/* Email Config Modal */}

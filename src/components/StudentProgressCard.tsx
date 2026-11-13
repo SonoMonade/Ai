@@ -1,7 +1,7 @@
-import React from 'react';
-import { CourseUnit } from '../types';
+import React, { useState } from 'react';
+import { CourseUnit, StudentProfile } from '../types';
 import { TOTAL_ENCOUNTERS } from '../data/courseData';
-import { CheckCircle2, Check } from 'lucide-react';
+import { CheckCircle2, Check, User, Mail, Phone, Edit3, Save, GraduationCap } from 'lucide-react';
 
 interface StudentProgressCardProps {
   completedEncounters: number[];
@@ -10,6 +10,8 @@ interface StudentProgressCardProps {
   onSelectUnit: (unitId: string) => void;
   onScrollToSection: (sectionId: string) => void;
   onToggleEncounter: (encounterNumber: number) => void;
+  currentStudent: StudentProfile | null;
+  onUpdateStudentProfile?: (updated: StudentProfile) => void;
 }
 
 export const StudentProgressCard: React.FC<StudentProgressCardProps> = ({
@@ -18,8 +20,17 @@ export const StudentProgressCard: React.FC<StudentProgressCardProps> = ({
   activeUnitId,
   onSelectUnit,
   onScrollToSection,
-  onToggleEncounter
+  onToggleEncounter,
+  currentStudent,
+  onUpdateStudentProfile
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFirst, setEditFirst] = useState(currentStudent?.firstName || '');
+  const [editLast, setEditLast] = useState(currentStudent?.lastName || '');
+  const [editEmail, setEditEmail] = useState(currentStudent?.email || '');
+  const [editPhone, setEditPhone] = useState(currentStudent?.phone || '');
+  const [saveNotice, setSaveNotice] = useState(false);
+
   const completedCount = completedEncounters.length;
   const percentage = Math.min(100, Math.max(0, Math.round((completedCount / TOTAL_ENCOUNTERS) * 100)));
 
@@ -31,7 +42,6 @@ export const StudentProgressCard: React.FC<StudentProgressCardProps> = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  // Status badge styling and narrative
   let statusText = "Inizio percorso";
   let ringColor = "#C85A32";
   let statusClass = "text-[#C85A32] bg-[#C85A32]/10";
@@ -54,7 +64,6 @@ export const StudentProgressCard: React.FC<StudentProgressCardProps> = ({
     statusClass = "text-[#C85A32] bg-[#C85A32]/10";
   }
 
-  // Flatten all 10 encounters with their parent unit info
   const allEncounters = units.flatMap(u =>
     u.sections.map(sec => ({
       unitId: u.id,
@@ -65,15 +74,154 @@ export const StudentProgressCard: React.FC<StudentProgressCardProps> = ({
     }))
   );
 
-  // Next uncompleted encounter for quick action button
   const nextEncounter =
     allEncounters.find(e => !completedEncounters.includes(e.encounterNumber)) ||
     allEncounters[allEncounters.length - 1];
 
   const isAllDone = completedCount === TOTAL_ENCOUNTERS;
 
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentStudent || !onUpdateStudentProfile) return;
+    const updated: StudentProfile = {
+      ...currentStudent,
+      firstName: editFirst.trim() || currentStudent.firstName,
+      lastName: editLast.trim() || currentStudent.lastName,
+      email: editEmail.trim().toLowerCase() || currentStudent.email,
+      phone: editPhone.trim()
+    };
+    onUpdateStudentProfile(updated);
+    setIsEditing(false);
+    setSaveNotice(true);
+    setTimeout(() => setSaveNotice(false), 2500);
+  };
+
   return (
-    <div className="editorial-card rounded-sm p-4 bg-white">
+    <div className="editorial-card rounded-sm p-4 bg-white space-y-4">
+      
+      {/* Top Bar: Scheda Studente Profile Header & Edit Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#1A1A1A]/15 pb-3 gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-sm bg-[#1B4D5C] text-white flex items-center justify-center shrink-0">
+            <GraduationCap className="w-4 h-4 text-[#F6E8B1]" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E473B]">
+                Scheda Studente Personale
+              </span>
+              {saveNotice && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-xs">
+                  ✓ Salvato con successo!
+                </span>
+              )}
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">
+              {currentStudent ? `${currentStudent.lastName} ${currentStudent.firstName}` : 'Studente Corso'}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          <div className="flex items-center gap-2 text-xs text-[#6E473B] font-mono">
+            <span className="flex items-center gap-1">
+              <Mail className="w-3 h-3 text-[#1B4D5C]" />
+              {currentStudent?.email || 'email@esempio.it'}
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <Phone className="w-3 h-3 text-[#C85A32]" />
+              {currentStudent?.phone || 'Nessun telefono'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (currentStudent) {
+                setEditFirst(currentStudent.firstName);
+                setEditLast(currentStudent.lastName);
+                setEditEmail(currentStudent.email);
+                setEditPhone(currentStudent.phone || '');
+              }
+              setIsEditing(!isEditing);
+            }}
+            className="px-2.5 py-1 bg-[#EFECE6] hover:bg-[#1B4D5C] hover:text-white text-[#1A1A1A] text-xs font-bold uppercase rounded-sm transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>{isEditing ? 'Chiudi' : 'Modifica Scheda'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Editable Student Profile Form with Salva button */}
+      {isEditing && currentStudent && onUpdateStudentProfile && (
+        <form onSubmit={handleSaveProfile} className="p-3.5 bg-[#F7F5F0] border border-[#1A1A1A]/20 rounded-sm space-y-3 text-xs animate-fadeIn">
+          <span className="font-bold text-[#6E473B] uppercase tracking-wider text-[10px] block">
+            Aggiorna i tuoi dati anagrafici e di contatto
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6E473B] mb-1">Nome</label>
+              <input
+                type="text"
+                required
+                value={editFirst}
+                onChange={(e) => setEditFirst(e.target.value)}
+                className="w-full bg-white border border-[#1A1A1A]/20 px-2.5 py-1.5 rounded-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6E473B] mb-1">Cognome</label>
+              <input
+                type="text"
+                required
+                value={editLast}
+                onChange={(e) => setEditLast(e.target.value)}
+                className="w-full bg-white border border-[#1A1A1A]/20 px-2.5 py-1.5 rounded-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6E473B] mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="w-full bg-white border border-[#1A1A1A]/20 px-2.5 py-1.5 rounded-sm font-mono text-[11px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-[#6E473B] mb-1">Telefono</label>
+              <input
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+39 333 1234567"
+                className="w-full bg-white border border-[#1A1A1A]/20 px-2.5 py-1.5 rounded-sm font-mono text-[11px]"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1 border-t border-[#1A1A1A]/10">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="px-3 py-1.5 border border-[#1A1A1A]/20 rounded-sm hover:bg-[#EFECE6] font-semibold"
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-1.5 bg-[#246A4E] hover:bg-[#1b503b] text-white font-bold uppercase tracking-wider rounded-sm flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Salva Modifiche</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Progress & Milestone Track */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
         
         {/* Left: Circular gauge + Key metric */}
@@ -117,7 +265,7 @@ export const StudentProgressCard: React.FC<StudentProgressCardProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E473B]">
-                Avanzamento
+                Avanzamento Corso
               </span>
               <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-xs ${statusClass}`}>
                 {statusText}

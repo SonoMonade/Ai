@@ -1,5 +1,5 @@
 import React from 'react';
-import { CourseUnit, DynamicCard, UserRole } from '../types';
+import { CourseUnit, DynamicCard, UserRole, StudentProfile } from '../types';
 import { StudentProgressCard } from './StudentProgressCard';
 import {
   Check,
@@ -27,6 +27,8 @@ interface UnitViewProps {
   onOpenAddCardModal: (column: '1' | '2' | '3') => void;
   onRemoveDynamicCard: (id: string) => void;
   onOpenAddMaterialModal: () => void;
+  currentStudent: StudentProfile | null;
+  onUpdateStudentProfile: (updated: StudentProfile) => void;
 }
 
 export const UnitView: React.FC<UnitViewProps> = ({
@@ -43,7 +45,9 @@ export const UnitView: React.FC<UnitViewProps> = ({
   onOpenDetailModal,
   onOpenAddCardModal,
   onRemoveDynamicCard,
-  onOpenAddMaterialModal
+  onOpenAddMaterialModal,
+  currentStudent,
+  onUpdateStudentProfile
 }) => {
   const unitCards = dynamicCards.filter(c => c.unitId === unit.id);
   const gridColsClass = unit.sections.length === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3';
@@ -86,6 +90,8 @@ export const UnitView: React.FC<UnitViewProps> = ({
           onSelectUnit={onSelectUnit}
           onScrollToSection={onScrollToSection}
           onToggleEncounter={onToggleEncounter}
+          currentStudent={currentStudent}
+          onUpdateStudentProfile={onUpdateStudentProfile}
         />
       )}
 
