@@ -84,7 +84,11 @@ const INITIAL_ROSTER: StudentProfile[] = [
 ];
 
 export default function App() {
-  // Session & Auth state - default directly to student so dashboard is immediately active and never blocked!
+  // Session & Auth state - start with LoginGateway if not logged in
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('ai_course_v2_logged_in') === 'true';
+  });
+
   const [userRole, setUserRole] = useState<UserRole>(() => {
     const saved = localStorage.getItem('ai_course_v2_role');
     return (saved as UserRole) || 'student';
@@ -133,7 +137,7 @@ export default function App() {
   const [showEmailBanner, setShowEmailBanner] = useState<boolean>(false);
 
   // Modals
-  const [isLoginGatewayOpen, setIsLoginGatewayOpen] = useState<boolean>(false);
+  const [isLoginGatewayOpen, setIsLoginGatewayOpen] = useState<boolean>(!isLoggedIn);
   const [isOpenDetailModal, setIsOpenDetailModal] = useState<boolean>(false);
   const [isTokenPredictorOpen, setIsTokenPredictorOpen] = useState<boolean>(false);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState<boolean>(false);
@@ -182,6 +186,8 @@ export default function App() {
     setUserRole('student');
     setIsEditorMode(false);
     setShowEmailBanner(true);
+    setIsLoggedIn(true);
+    localStorage.setItem('ai_course_v2_logged_in', 'true');
     setIsLoginGatewayOpen(false);
 
     // Save to roster if new
@@ -198,6 +204,8 @@ export default function App() {
   const handleLoginAdmin = () => {
     setUserRole('admin');
     setIsEditorMode(true);
+    setIsLoggedIn(true);
+    localStorage.setItem('ai_course_v2_logged_in', 'true');
     setIsLoginGatewayOpen(false);
   };
 
@@ -409,7 +417,11 @@ export default function App() {
           setIsAddCardModalOpen(true);
         }}
         onExportJson={handleExportJson}
-        onOpenLoginGateway={() => setIsLoginGatewayOpen(true)}
+        onOpenLoginGateway={() => {
+          setIsLoggedIn(false);
+          localStorage.removeItem('ai_course_v2_logged_in');
+          setIsLoginGatewayOpen(true);
+        }}
         rosterCount={registeredStudents.length}
         syncConnected={true}
       />

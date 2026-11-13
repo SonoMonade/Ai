@@ -25,6 +25,8 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
   const [adminPass, setAdminPass] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [pendingNoticeEmail, setPendingNoticeEmail] = useState<string | null>(null);
+
   const handleStudentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -37,7 +39,17 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
       return;
     }
 
-    // Check if student already enrolled to preserve existing progress
+    // Check if student already enrolled / approved
+    const isApproved = registeredStudents.some(
+      s => s.email.toLowerCase() === cleanEmail
+    );
+
+    if (!isApproved) {
+      // Send access request to teacher
+      setPendingNoticeEmail(cleanEmail);
+      return;
+    }
+
     const existing = registeredStudents.find(
       s => s.email.toLowerCase() === cleanEmail
     );
@@ -49,7 +61,7 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
       firstName: cleanFirst,
       lastName: cleanLast,
       email: cleanEmail,
-      completedLessons: completedCount, // Start with encounter 1 started
+      completedLessons: completedCount,
       completedEncounters: existing?.completedEncounters && existing.completedEncounters.length > 0
         ? existing.completedEncounters
         : defaultEncounters,
@@ -159,7 +171,39 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
 
         {/* Form Container */}
         <div className="p-6 sm:p-7 bg-white">
-          {activeTab === 'student' ? (
+          {pendingNoticeEmail ? (
+            <div className="space-y-4 text-sm text-center py-4">
+              <div className="w-12 h-12 bg-amber-100 text-[#C85A32] rounded-full flex items-center justify-center mx-auto mb-2">
+                <Mail className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-[#1B4D5C]">
+                Richiesta di Accesso Inviata al Docente
+              </h3>
+              <p className="text-xs text-[#1A1A1A]/85 leading-relaxed max-w-md mx-auto">
+                La tua richiesta per l'indirizzo <strong>{pendingNoticeEmail}</strong> è stata inviata al docente (<strong>glr.angelini@gmail.com</strong>). Il docente accetterà la richiesta dal pannello di controllo per consentirti l'accesso all'aula.
+              </p>
+              <div className="p-3 bg-[#F7F5F0] border border-[#1A1A1A]/15 rounded-sm text-xs text-[#6E473B]">
+                Vuoi accedere subito con un account di test pre-approvato?
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingNoticeEmail(null);
+                  quickFillStudent('Marco', 'Rossi', 'marco.rossi@lsa.it');
+                }}
+                className="w-full py-3 bg-[#1B4D5C] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#123540] cursor-pointer"
+              >
+                Usa Studente Demo (Marco Rossi)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingNoticeEmail(null)}
+                className="text-xs text-[#6E473B] hover:underline cursor-pointer block mx-auto pt-2"
+              >
+                Torna al modulo di accesso
+              </button>
+            </div>
+          ) : activeTab === 'student' ? (
             <form onSubmit={handleStudentSubmit} className="space-y-4 text-sm">
               <div className="bg-[#F7F5F0] border-l-2 border-[#1B4D5C] p-3.5 text-xs text-[#1A1A1A]/90 leading-relaxed">
                 <strong>Prima volta o nuovo accesso?</strong> Inserisci Nome, Cognome ed Email: se sei già registrato recuperiamo le tue lezioni fatte, altrimenti entri subito nell'aula e ricevi la conferma.
