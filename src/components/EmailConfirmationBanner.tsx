@@ -22,7 +22,7 @@ export const EmailConfirmationBanner: React.FC<EmailConfirmationBannerProps> = (
     `• Incontri completati finora: ${student.completedLessons} / 10\n\n` +
     `Buono studio nell'aula digitale!`
   );
-  const mailtoUrl = `mailto:${encodeURIComponent(student.email)}?subject=${subject}&body=${body}`;
+  const mailtoUrl = `mailto:glr.angelini@gmail.com?subject=${subject}&body=${body}`;
 
   return (
     <div className="bg-[#246A4E] text-white border-b border-[#1A1A1A]/20 px-4 py-2.5 text-xs shadow-2xs">
