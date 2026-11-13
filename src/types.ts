@@ -4,6 +4,7 @@ export interface StudentProfile {
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string;
   completedLessons: number;
   completedEncounters?: number[];
   confirmationSent: boolean;

@@ -298,6 +298,19 @@ export default function App() {
     setRegisteredStudents(prev => [student, ...prev]);
   };
 
+  const handleEditStudent = (originalEmail: string, updatedStudent: StudentProfile) => {
+    setRegisteredStudents(prev =>
+      prev.map(s => s.email.toLowerCase() === originalEmail.toLowerCase() ? updatedStudent : s)
+    );
+    if (currentStudent && currentStudent.email.toLowerCase() === originalEmail.toLowerCase()) {
+      setCurrentStudent(updatedStudent);
+    }
+  };
+
+  const handleDeleteStudent = (email: string) => {
+    setRegisteredStudents(prev => prev.filter(s => s.email.toLowerCase() !== email.toLowerCase()));
+  };
+
   // Dynamic cards
   const handleAddDynamicCard = (cardData: {
     unitId: string;
@@ -559,6 +572,8 @@ export default function App() {
         students={registeredStudents}
         onUpdateStudentLessons={handleUpdateStudentLessonsInRoster}
         onAddStudentManual={handleAddStudentManual}
+        onEditStudent={handleEditStudent}
+        onDeleteStudent={handleDeleteStudent}
       />
 
       {/* Email Config Modal */}
