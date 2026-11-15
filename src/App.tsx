@@ -25,6 +25,7 @@ import { AddCardModal } from './components/modals/AddCardModal';
 import { AddMaterialModal } from './components/modals/AddMaterialModal';
 import { RosterModal } from './components/modals/RosterModal';
 import { EmailConfigModal } from './components/modals/EmailConfigModal';
+import { StudentProfileModal } from './components/modals/StudentProfileModal';
 
 const getStudentEncounters = (student: StudentProfile): number[] => {
   if (student.completedEncounters && Array.isArray(student.completedEncounters)) {
@@ -162,6 +163,7 @@ export default function App() {
   const [addMaterialFolderId, setAddMaterialFolderId] = useState<string>('M1');
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false);
   const [isEmailConfigModalOpen, setIsEmailConfigModalOpen] = useState<boolean>(false);
+  const [isStudentProfileModalOpen, setIsStudentProfileModalOpen] = useState<boolean>(false);
 
   // Persistence to localStorage
   useEffect(() => {
@@ -490,6 +492,7 @@ export default function App() {
         }}
         rosterCount={registeredStudents.length}
         syncConnected={true}
+        onOpenStudentProfile={() => setIsStudentProfileModalOpen(true)}
       />
 
       {/* 2. Email Confirmation Banner */}
@@ -643,6 +646,16 @@ export default function App() {
         config={emailConfig}
         onSaveConfig={setEmailConfig}
       />
+
+      {/* Student Profile Modal (Read-only for student) */}
+      {isStudentProfileModalOpen && currentStudent && (
+        <StudentProfileModal
+          isOpen={true}
+          onClose={() => setIsStudentProfileModalOpen(false)}
+          student={currentStudent}
+          isReadOnly={true}
+        />
+      )}
 
     </div>
   );

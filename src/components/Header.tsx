@@ -27,6 +27,7 @@ interface HeaderProps {
   onOpenAddCardModal: () => void;
   onExportJson: () => void;
   onOpenLoginGateway: () => void;
+  onOpenStudentProfile: () => void;
   rosterCount: number;
   syncConnected: boolean;
 }
@@ -44,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddCardModal,
   onExportJson,
   onOpenLoginGateway,
+  onOpenStudentProfile,
   rosterCount,
   syncConnected
 }) => {
@@ -218,6 +220,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Scheda</span>
+              </button>
+            )}
+
+            {/* Student Profile Button (Read-only view for student) */}
+            {userRole === 'student' && currentStudent && (
+              <button
+                onClick={onOpenStudentProfile}
+                title="Visualizza la tua scheda studente personale"
+                className="px-2.5 py-1.5 bg-white hover:bg-[#F7F5F0] text-[#1B4D5C] border border-[#1B4D5C] text-xs font-bold uppercase tracking-wider rounded-sm transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-[#C85A32]" />
+                <span className="hidden sm:inline">Scheda Personale</span>
               </button>
             )}
 
