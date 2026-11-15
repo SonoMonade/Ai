@@ -152,8 +152,6 @@ export default function App() {
   const [activeUnitId, setActiveUnitId] = useState<string>('unit-1');
   const [showEmailBanner, setShowEmailBanner] = useState<boolean>(false);
 
-  // Modals
-  const [isLoginGatewayOpen, setIsLoginGatewayOpen] = useState<boolean>(!isLoggedIn);
   const [isOpenDetailModal, setIsOpenDetailModal] = useState<boolean>(false);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState<boolean>(false);
   const [addCardDefaultCol, setAddCardDefaultCol] = useState<'1' | '2' | '3'>('1');
@@ -208,7 +206,6 @@ export default function App() {
     setShowEmailBanner(true);
     setIsLoggedIn(true);
     localStorage.setItem('ai_course_v2_logged_in', 'true');
-    setIsLoginGatewayOpen(false);
 
     // Save to roster if new
     setRegisteredStudents(prev => {
@@ -226,7 +223,6 @@ export default function App() {
     setIsEditorMode(true);
     setIsLoggedIn(true);
     localStorage.setItem('ai_course_v2_logged_in', 'true');
-    setIsLoginGatewayOpen(false);
   };
 
   // Switch role directly from header
@@ -464,6 +460,19 @@ export default function App() {
   const activeUnit = COURSE_UNITS.find(u => u.id === activeUnitId) || COURSE_UNITS[0];
   const studentEncounters = getStudentEncounters(currentStudent);
 
+  if (!isLoggedIn) {
+    return (
+      <LoginGateway
+        onLoginStudent={handleLoginStudent}
+        onLoginAdmin={handleLoginAdmin}
+        syncConnected={true}
+        registeredStudents={registeredStudents}
+        pendingStudents={pendingStudents}
+        onAddPendingStudent={handleAddPendingStudent}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F5F0]">
       
@@ -485,7 +494,6 @@ export default function App() {
         onOpenLoginGateway={() => {
           setIsLoggedIn(false);
           localStorage.removeItem('ai_course_v2_logged_in');
-          setIsLoginGatewayOpen(true);
         }}
         rosterCount={registeredStudents.length}
         syncConnected={true}
@@ -573,21 +581,6 @@ export default function App() {
           <span>Materiale didattico ad uso esclusivo dei partecipanti • 2026</span>
         </div>
       </footer>
-
-      {/* Login Gateway Modal */}
-      {isLoginGatewayOpen && (
-        <div className="fixed inset-0 bg-[#1A1A1A]/60 z-50 flex items-center justify-center p-4">
-          <LoginGateway
-            onLoginStudent={handleLoginStudent}
-            onLoginAdmin={handleLoginAdmin}
-            syncConnected={true}
-            registeredStudents={registeredStudents}
-            pendingStudents={pendingStudents}
-            onAddPendingStudent={handleAddPendingStudent}
-            onClose={() => setIsLoginGatewayOpen(false)}
-          />
-        </div>
-      )}
 
       {/* Detail Comparative Table Modal */}
       <OpenDetailModal
