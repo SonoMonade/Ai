@@ -29,7 +29,6 @@ interface BottomSectionsProps {
   onRemoveStudyMaterial: (id: string) => void;
   studentNotes: string;
   onSaveStudentNotes: (notes: string) => void;
-  onOpenTokenSimulator: () => void;
 }
 
 export const BottomSections: React.FC<BottomSectionsProps> = ({
@@ -41,8 +40,7 @@ export const BottomSections: React.FC<BottomSectionsProps> = ({
   onOpenAddMaterialModal,
   onRemoveStudyMaterial,
   studentNotes,
-  onSaveStudentNotes,
-  onOpenTokenSimulator
+  onSaveStudentNotes
 }) => {
   // Glossary state
   const [glossarySearch, setGlossarySearch] = useState('');
@@ -397,13 +395,6 @@ export const BottomSections: React.FC<BottomSectionsProps> = ({
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E473B]">
                 Laboratorio Studente
               </span>
-              <button
-                onClick={onOpenTokenSimulator}
-                className="text-[10px] font-bold text-[#C85A32] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>Simulatore</span>
-              </button>
             </div>
 
             {/* Tab switch between Notebook and Quiz */}

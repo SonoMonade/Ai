@@ -23,7 +23,6 @@ interface HeaderProps {
   onUpdateCompletedLessons: (delta: number) => void;
   onOpenRosterModal: () => void;
   onOpenEmailConfigModal: () => void;
-  onOpenTokenSimulator: () => void;
   onOpenAddCardModal: () => void;
   onExportJson: () => void;
   onOpenLoginGateway: () => void;
@@ -41,7 +40,6 @@ export const Header: React.FC<HeaderProps> = ({
   onUpdateCompletedLessons,
   onOpenRosterModal,
   onOpenEmailConfigModal,
-  onOpenTokenSimulator,
   onOpenAddCardModal,
   onExportJson,
   onOpenLoginGateway,
@@ -180,16 +178,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Tools */}
           <div className="flex flex-wrap items-center gap-1.5">
-            {/* Interactive Token Playground */}
-            <button
-              onClick={onOpenTokenSimulator}
-              title="Apri il simulatore di probabilità AI"
-              className="px-2.5 py-1.5 bg-white hover:bg-[#F7F5F0] text-[#1B4D5C] border border-[#1B4D5C] text-xs font-bold uppercase tracking-wider rounded-sm transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#C85A32]" />
-              <span className="hidden sm:inline">Simulatore</span>
-            </button>
-
             {/* Admin Roster */}
             {userRole === 'admin' && (
               <button

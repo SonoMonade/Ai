@@ -18,7 +18,6 @@ interface SidebarProps {
   activeUnitId: string;
   onSelectUnit: (unitId: string) => void;
   onScrollToSection: (sectionId: string) => void;
-  onOpenTokenSimulator: () => void;
   completedEncounters: number[];
 }
 
@@ -27,7 +26,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeUnitId,
   onSelectUnit,
   onScrollToSection,
-  onOpenTokenSimulator,
   completedEncounters
 }) => {
   const [isTreeOpen, setIsTreeOpen] = useState(true);
@@ -208,14 +206,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] uppercase tracking-wider block text-[#1A1A1A]/70 mb-1">
             Accesso Rapido Strumenti
           </span>
-          <button
-            type="button"
-            onClick={onOpenTokenSimulator}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white hover:text-[#C85A32] transition-colors text-left cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#C85A32]" />
-            <span>Simulatore Probabilità AI</span>
-          </button>
           <button
             type="button"
             onClick={() => onScrollToSection('section-glossary')}

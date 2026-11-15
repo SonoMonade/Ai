@@ -178,24 +178,11 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
               <p className="text-xs text-[#1A1A1A]/85 leading-relaxed max-w-md mx-auto">
                 La tua richiesta per l'indirizzo <strong>{pendingNoticeEmail}</strong> è stata inoltrata con successo. Il docente (<strong>glr.angelini@gmail.com</strong>) deve accettare la richiesta dal registro di amministrazione affinché tu possa accedere all'aula.
               </p>
-              <div className="p-3 bg-[#F7F5F0] border border-[#1A1A1A]/15 rounded-sm text-xs text-[#6E473B]">
-                Vuoi accedere subito con un account di test già accettato (es. Giulia Bianchi o Marco Rossi)?
-              </div>
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingNoticeEmail(null);
-                    quickFillStudent('Giulia', 'Bianchi', 'giulia.bianchi@lsa.it', '+39 333 1122334');
-                  }}
-                  className="w-full py-2.5 bg-[#1B4D5C] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#123540] cursor-pointer"
-                >
-                  Usa Account Test Approvato (Giulia Bianchi)
-                </button>
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setPendingNoticeEmail(null)}
-                  className="text-xs text-[#6E473B] hover:underline cursor-pointer pt-1"
+                  className="w-full py-2.5 bg-[#1B4D5C] text-white text-xs font-bold uppercase tracking-wider rounded-sm hover:bg-[#123540] cursor-pointer"
                 >
                   Invia un'altra richiesta o modifica email
                 </button>
@@ -291,18 +278,6 @@ export const LoginGateway: React.FC<LoginGatewayProps> = ({
                 <span>Invia Richiesta di Iscrizione al Docente</span>
               </button>
 
-              {/* Quick test student button */}
-              <div className="pt-2 border-t border-[#1A1A1A]/10 flex items-center justify-between text-xs text-[#6E473B]">
-                <span>Vuoi provare subito un account già accettato?</span>
-                <button
-                  type="button"
-                  onClick={() => quickFillStudent('Giulia', 'Bianchi', 'giulia.bianchi@lsa.it', '+39 333 1122334')}
-                  className="font-bold underline text-[#1B4D5C] hover:text-[#C85A32] cursor-pointer flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Usa Giulia Bianchi</span>
-                </button>
-              </div>
             </form>
           ) : (
             <form onSubmit={handleAdminSubmit} className="space-y-4 text-sm">

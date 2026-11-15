@@ -20,7 +20,6 @@ import { BottomSections } from './components/BottomSections';
 import { LoginGateway } from './components/LoginGateway';
 import { EmailConfirmationBanner } from './components/EmailConfirmationBanner';
 import { OpenDetailModal } from './components/modals/OpenDetailModal';
-import { TokenPredictorModal } from './components/modals/TokenPredictorModal';
 import { AddCardModal } from './components/modals/AddCardModal';
 import { AddMaterialModal } from './components/modals/AddMaterialModal';
 import { RosterModal } from './components/modals/RosterModal';
@@ -156,7 +155,6 @@ export default function App() {
   // Modals
   const [isLoginGatewayOpen, setIsLoginGatewayOpen] = useState<boolean>(!isLoggedIn);
   const [isOpenDetailModal, setIsOpenDetailModal] = useState<boolean>(false);
-  const [isTokenPredictorOpen, setIsTokenPredictorOpen] = useState<boolean>(false);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState<boolean>(false);
   const [addCardDefaultCol, setAddCardDefaultCol] = useState<'1' | '2' | '3'>('1');
   const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState<boolean>(false);
@@ -479,7 +477,6 @@ export default function App() {
         onUpdateCompletedLessons={handleUpdateCompletedLessons}
         onOpenRosterModal={() => setIsRosterModalOpen(true)}
         onOpenEmailConfigModal={() => setIsEmailConfigModalOpen(true)}
-        onOpenTokenSimulator={() => setIsTokenPredictorOpen(true)}
         onOpenAddCardModal={() => {
           setAddCardDefaultCol('1');
           setIsAddCardModalOpen(true);
@@ -515,7 +512,6 @@ export default function App() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onScrollToSection={scrollToSection}
-          onOpenTokenSimulator={() => setIsTokenPredictorOpen(true)}
           completedEncounters={studentEncounters}
         />
 
@@ -565,7 +561,6 @@ export default function App() {
             onRemoveStudyMaterial={handleRemoveStudyMaterial}
             studentNotes={studentNotes}
             onSaveStudentNotes={handleSaveStudentNotes}
-            onOpenTokenSimulator={() => setIsTokenPredictorOpen(true)}
           />
 
         </main>
@@ -598,12 +593,6 @@ export default function App() {
       <OpenDetailModal
         isOpen={isOpenDetailModal}
         onClose={() => setIsOpenDetailModal(false)}
-      />
-
-      {/* Token Predictor Interactive Simulator */}
-      <TokenPredictorModal
-        isOpen={isTokenPredictorOpen}
-        onClose={() => setIsTokenPredictorOpen(false)}
       />
 
       {/* Add Card Modal */}
